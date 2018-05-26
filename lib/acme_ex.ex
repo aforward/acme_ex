@@ -9,7 +9,8 @@ defmodule AcmeEx do
       {Plug.Adapters.Cowboy2,
        scheme: :http,
        plug: {AcmeEx.Router, [site: "http://localhost:4002"]},
-       options: [port: 4002]}
+       options: [port: 4002]},
+      AcmeEx.Nonce
     ]
 
     opts = [

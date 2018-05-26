@@ -7,7 +7,11 @@ defmodule AcmeEx.Router do
     send_resp(conn, 200, "hello world")
   end
 
-  def call(%Plug.Conn{request_path: "/directory"} = conn, configs) do
+  def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _configs) do
+    respond_body(conn, 405, "", [AcmeEx.Nonce.new() |> AcmeEx.Header.nonce()])
+  end
+
+  def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, configs) do
     respond_json(conn, 200, %{
       newNonce: "#{configs.site}/new-nonce",
       newAccount: "#{configs.site}/new-account",
