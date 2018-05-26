@@ -6,7 +6,7 @@ defmodule AcmeEx do
     import Supervisor.Spec, warn: false
 
     children = [
-      # worker(One.Worker, [arg1, arg2, arg3]),
+      {Plug.Adapters.Cowboy2, scheme: :http, plug: AcmeEx.Router, options: [port: 4001]}
     ]
 
     opts = [

@@ -5,6 +5,8 @@ defmodule AcmeEx.Mixfile do
   @version "0.1.0"
 
   @deps [
+    {:cowboy, "~> 2.0"},
+    {:plug, "~> 1.0"}
     # { :earmark, ">0.1.5" },
     # { :ex_doc,  "1.2.3", only: [ :dev, :test ] },
     # { :my_app:  path: "../my_app" },
@@ -32,7 +34,9 @@ defmodule AcmeEx.Mixfile do
     [
       mod: {AcmeEx, []},
       extra_applications: [
-        :logger
+        :logger,
+        :cowboy,
+        :plug
       ]
     ]
   end
