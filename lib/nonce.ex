@@ -4,7 +4,7 @@ defmodule AcmeEx.Nonce do
   def next(), do: create() + 1
 
   def verify(nonce) do
-    case AcmeEx.Db.pop(:nonce, nonce) do
+    case AcmeEx.Db.pop({:nonce, nonce}) do
       {ok, _} -> ok
     end
   end
@@ -13,5 +13,8 @@ defmodule AcmeEx.Nonce do
 
   def create(), do: :erlang.unique_integer([:positive, :monotonic])
 
-  defp insert(nonce), do: AcmeEx.Db.create(:nonce, nonce)
+  defp insert(nonce) do
+    {:nonce, ^nonce} = AcmeEx.Db.create({:nonce, nonce})
+    nonce
+  end
 end

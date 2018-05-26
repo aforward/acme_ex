@@ -8,32 +8,21 @@ defmodule AcmeEx.Db do
     {:ok, nil}
   end
 
-  def create(entity, id, obj \\ nil) do
-    case :ets.insert_new(__MODULE__, {{entity, id}, obj}) do
-      true -> id
-      false -> raise "Unable to store #{entity} #{id}"
+  def create(key, obj \\ nil) do
+    case :ets.insert_new(__MODULE__, {key, obj}) do
+      true -> key
+      false -> raise "Unable to store #{key |> Kernel.inspect()}"
     end
   end
 
-  def fetch(entity, id) do
-    key = {entity, id}
+  def fetch(key), do: :ets.lookup(__MODULE__, key) |> clean(key)
 
-    :ets.lookup(__MODULE__, key)
-    |> clean(key)
-  end
+  def pop(key), do: :ets.take(__MODULE__, key) |> clean(key)
 
-  def pop(entity, id) do
-    key = {entity, id}
-
-    :ets.take(__MODULE__, key)
-    |> clean(key)
-  end
-
-  defp clean(answer, {entity, id} = key) do
+  defp clean(answer, key) do
     case answer do
       [{^key, value}] -> {:ok, value}
-      _ -> {:error, "Unable to locate #{entity} #{id}"}
+      _ -> {:error, "Unable to locate #{key |> Kernel.inspect()}"}
     end
   end
-
 end
