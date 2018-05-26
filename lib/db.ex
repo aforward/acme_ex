@@ -15,6 +15,8 @@ defmodule AcmeEx.Db do
     end
   end
 
+  def store(key, obj), do: :ets.insert(__MODULE__, {key, obj})
+
   def fetch(key), do: :ets.lookup(__MODULE__, key) |> clean(key)
 
   def pop(key), do: :ets.take(__MODULE__, key) |> clean(key)
