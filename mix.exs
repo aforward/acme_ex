@@ -5,6 +5,7 @@ defmodule AcmeEx.Mixfile do
   @version "0.1.0"
 
   @deps [
+    {:jason, "~> 1.0"},
     {:cowboy, "~> 2.0"},
     {:plug, "~> 1.0"}
     # { :earmark, ">0.1.5" },
