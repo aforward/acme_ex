@@ -20,7 +20,7 @@ defmodule AcmeEx.Mixfile do
     [
       app: @name,
       version: @version,
-      elixir: ">= 1.6.5",
+      elixir: ">= 1.6.0",
       deps: @deps,
       aliases: @aliases,
       elixirc_paths: ["lib"],
