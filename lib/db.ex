@@ -8,19 +8,32 @@ defmodule AcmeEx.Db do
     {:ok, nil}
   end
 
-  def create(entity, id) do
-    case :ets.insert_new(__MODULE__, {{entity, id}, nil}) do
+  def create(entity, id, obj \\ nil) do
+    case :ets.insert_new(__MODULE__, {{entity, id}, obj}) do
       true -> id
       false -> raise "Unable to store #{entity} #{id}"
     end
   end
 
+  def fetch(entity, id) do
+    key = {entity, id}
+
+    :ets.lookup(__MODULE__, key)
+    |> clean(key)
+  end
+
   def pop(entity, id) do
     key = {entity, id}
 
-    case :ets.take(__MODULE__, key) do
+    :ets.take(__MODULE__, key)
+    |> clean(key)
+  end
+
+  defp clean(answer, {entity, id} = key) do
+    case answer do
       [{^key, value}] -> {:ok, value}
       _ -> {:error, "Unable to locate #{entity} #{id}"}
     end
   end
+
 end
