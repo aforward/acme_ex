@@ -10,7 +10,7 @@ defmodule AcmeEx do
        scheme: :http,
        plug: {AcmeEx.Router, [site: "http://localhost:4002"]},
        options: [port: 4002]},
-      AcmeEx.Nonce
+      AcmeEx.Db
     ]
 
     opts = [
