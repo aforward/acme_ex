@@ -26,9 +26,19 @@ defmodule AcmeEx.Router do
     |> (fn opts -> Plug.Static.call(conn, opts) end).()
   end
 
-  defp respond_json(conn, status, data) do
+  defp respond_json(conn, status, data, headers \\ []) do
     conn
-    |> merge_resp_headers([{"content-type", "application/json"}])
-    |> send_resp(status, Jason.encode!(data))
+    |> merge_resp_headers(headers)
+    |> respond_body(
+      status,
+      Jason.encode!(data),
+      [{"content-type", "application/json"}]
+    )
+  end
+
+  defp respond_body(conn, status, body, headers) do
+    conn
+    |> merge_resp_headers(headers)
+    |> send_resp(status, body)
   end
 end
