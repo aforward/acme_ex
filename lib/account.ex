@@ -1,5 +1,8 @@
 defmodule AcmeEx.Account do
+  alias AcmeEx.Jws
+
   def client_key(request), do: request.protected |> Map.fetch!("jwk")
+  def thumbprint(request), do: request |> client_key() |> Jws.thumbprint()
 
   def new(client_key), do: create() |> insert(client_key)
 

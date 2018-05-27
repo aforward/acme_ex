@@ -1,4 +1,6 @@
 defmodule AcmeEx.Jws do
+  alias AcmeEx.Account
+
   def client_key(request), do: Map.fetch!(request.protected, "jwk")
 
   def decode(body) when is_binary(body) do
@@ -14,6 +16,8 @@ defmodule AcmeEx.Jws do
         error
     end
   end
+
+  def thumbprint(request), do: JOSE.JWK.thumbprint(request)
 
   def unwrap(body) do
     body
