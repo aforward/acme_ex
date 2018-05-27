@@ -1,5 +1,5 @@
 defmodule AcmeEx.AccountTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias AcmeEx.Account
 
