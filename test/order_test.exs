@@ -1,5 +1,5 @@
 defmodule AcmeEx.OrderTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   test "new" do
     account = AcmeEx.Account.new("abc124")
