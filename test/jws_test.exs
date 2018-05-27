@@ -1,6 +1,8 @@
 defmodule AcmeEx.JwsTest do
   use ExUnit.Case, async: true
 
+  alias AcmeEx.Jws
+
   @body %{
           "payload" =>
             "ewogICJyZXNvdXJjZSI6ICJuZXctY2VydCIsCiAgImNzciI6ICJNSUlDaFRDQ0FXMENBUUl3QURDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTGFQZ3JOeWdzSFRBc1EzN3YxbkttdWhBVW5xaV93UGdxcF85OTgyUld6dkYwendLcnUxRlBOaG9Sa2JHU25OakQxb1RvR0JsV2FFNWJEVWtaWjBHQW1WeGpIM1ZuNEIzczBOMDlkTzFyNXdZcktNakhaZlVLaU02bnN2cW9GalJpZWxod2wzT2hWMW5xYmJKRmM5ZFJxUTlQc0xhLWRVLTdqbWRCREg2NXF4bmgxaS1PNFY4LWxJMVRQdVJnOFdHWlo1eXE3TEZ6SEZzN3lKNzdXekRyWmxXS3UzVzIwekUwSW54RnVRbUhIMnNQT3U5clFNNzlpRXpPWHZqY2xSOWZ5OXRGaS1wZ0FMem5RRjE2WjlLRi1xdHpRZEtpa3NaTU9SWm9CS2J2MTE1c2NUbEhxdkN2MDg5d0xzTWVEc3hvRkFpR2dJVzJncTVJVVhPdHVLbWIwQ0F3RUFBYUJBTUQ0R0NTcUdTSWIzRFFFSkRqRXhNQzh3TFFZRFZSMFJCQ1l3SklJSFptOXZMbUpoY29JTGQzZDNMbVp2Ynk1aVlYS0NER0pzYjJjdVptOXZMbUpoY2pBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQUxEUHBpRm9pbDRQYjVDeHh6RHRhYWZLTTdIRGtud1BfVVBJMkVVX1Z2dzJrQ3hXUGYwWUNLek15QlpPbElydmQ2SEtmUmk0QXRKLXdCbkJtQU9XR2dRM2JxZ0xKVEFQM1o5WHdwOERhR0NCc1VrQ3o3c2hzdHc2SUZlMHNsbVpTSXBQMjlub0U0Z3doNEpPeWdZV0tYX2hqdUp6RXhEa0VZRGR5a2psa2d6d0pSNlBZQmo4N05KTExDYlE1TE0yWHNPbTc0UzZMLWtXWTF0TV9wdkFBZjVmQ2FxcmF1QllPckhfUlZoMDM4bUhDY1dSalc3a2MtRkpnRzM2dlk5NUJseHJKZUdINVJDcWlHS2NIVElJSDRyVGJKak9pa2lmRDZLUkk0M25ZdzhQVE1HTWZSNnJiY0tGd0VQLWtkV2hVUEpEYURKTXpmX2pYOHoyLTNqYVJNUSIKfQ",
@@ -37,12 +39,12 @@ defmodule AcmeEx.JwsTest do
       ]
     }
 
-    assert AcmeEx.Jws.format(body) == expected
-    assert AcmeEx.Jws.format(body |> Jason.encode!()) == expected
+    assert Jws.format(body) == expected
+    assert Jws.format(body |> Jason.encode!()) == expected
   end
 
   test "unwrap all fields the provided payload for review" do
-    assert AcmeEx.Jws.unwrap(@body) == %{
+    assert Jws.unwrap(@body) == %{
              "payload" => %{
                "csr" =>
                  "MIIChTCCAW0CAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALaPgrNygsHTAsQ37v1nKmuhAUnqi_wPgqp_9982RWzvF0zwKru1FPNhoRkbGSnNjD1oToGBlWaE5bDUkZZ0GAmVxjH3Vn4B3s0N09dO1r5wYrKMjHZfUKiM6nsvqoFjRielhwl3OhV1nqbbJFc9dRqQ9PsLa-dU-7jmdBDH65qxnh1i-O4V8-lI1TPuRg8WGZZ5yq7LFzHFs7yJ77WzDrZlWKu3W20zE0InxFuQmHH2sPOu9rQM79iEzOXvjclR9fy9tFi-pgALznQF16Z9KF-qtzQdKiksZMORZoBKbv115scTlHqvCv089wLsMeDsxoFAiGgIW2gq5IUXOtuKmb0CAwEAAaBAMD4GCSqGSIb3DQEJDjExMC8wLQYDVR0RBCYwJIIHZm9vLmJhcoILd3d3LmZvby5iYXKCDGJsb2cuZm9vLmJhcjANBgkqhkiG9w0BAQsFAAOCAQEALDPpiFoil4Pb5CxxzDtaafKM7HDknwP_UPI2EU_Vvw2kCxWPf0YCKzMyBZOlIrvd6HKfRi4AtJ-wBnBmAOWGgQ3bqgLJTAP3Z9Xwp8DaGCBsUkCz7shstw6IFe0slmZSIpP29noE4gwh4JOygYWKX_hjuJzExDkEYDdykjlkgzwJR6PYBj87NJLLCbQ5LM2XsOm74S6L-kWY1tM_pvAAf5fCaqrauBYOrH_RVh038mHCcWRjW7kc-FJgG36vY95BlxrJeGH5RCqiGKcHTIIH4rTbJjOikifD6KRI43nYw8PTMGMfR6rbcKFwEP-kdWhUPJDaDJMzf_jX8z2-3jaRMQ",
@@ -65,7 +67,7 @@ defmodule AcmeEx.JwsTest do
   end
 
   test "unwrap specific field" do
-    assert AcmeEx.Jws.unwrap(@body, "protected") == %{
+    assert Jws.unwrap(@body, "protected") == %{
              "alg" => "RS256",
              "jwk" => %{
                "e" => "AQAB",
@@ -79,7 +81,7 @@ defmodule AcmeEx.JwsTest do
   end
 
   test "key from JWS" do
-    assert AcmeEx.Jws.key(@body) == %JOSE.JWK{
+    assert Jws.key(@body) == %JOSE.JWK{
              fields: %{},
              keys: :undefined,
              kty:
@@ -91,7 +93,7 @@ defmodule AcmeEx.JwsTest do
   end
 
   test "decode (good)" do
-    assert AcmeEx.Jws.decode(@body) ==
+    assert Jws.decode(@body) ==
              {:ok,
               %{
                 payload: %{
@@ -99,11 +101,11 @@ defmodule AcmeEx.JwsTest do
                     "MIIChTCCAW0CAQIwADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALaPgrNygsHTAsQ37v1nKmuhAUnqi_wPgqp_9982RWzvF0zwKru1FPNhoRkbGSnNjD1oToGBlWaE5bDUkZZ0GAmVxjH3Vn4B3s0N09dO1r5wYrKMjHZfUKiM6nsvqoFjRielhwl3OhV1nqbbJFc9dRqQ9PsLa-dU-7jmdBDH65qxnh1i-O4V8-lI1TPuRg8WGZZ5yq7LFzHFs7yJ77WzDrZlWKu3W20zE0InxFuQmHH2sPOu9rQM79iEzOXvjclR9fy9tFi-pgALznQF16Z9KF-qtzQdKiksZMORZoBKbv115scTlHqvCv089wLsMeDsxoFAiGgIW2gq5IUXOtuKmb0CAwEAAaBAMD4GCSqGSIb3DQEJDjExMC8wLQYDVR0RBCYwJIIHZm9vLmJhcoILd3d3LmZvby5iYXKCDGJsb2cuZm9vLmJhcjANBgkqhkiG9w0BAQsFAAOCAQEALDPpiFoil4Pb5CxxzDtaafKM7HDknwP_UPI2EU_Vvw2kCxWPf0YCKzMyBZOlIrvd6HKfRi4AtJ-wBnBmAOWGgQ3bqgLJTAP3Z9Xwp8DaGCBsUkCz7shstw6IFe0slmZSIpP29noE4gwh4JOygYWKX_hjuJzExDkEYDdykjlkgzwJR6PYBj87NJLLCbQ5LM2XsOm74S6L-kWY1tM_pvAAf5fCaqrauBYOrH_RVh038mHCcWRjW7kc-FJgG36vY95BlxrJeGH5RCqiGKcHTIIH4rTbJjOikifD6KRI43nYw8PTMGMfR6rbcKFwEP-kdWhUPJDaDJMzf_jX8z2-3jaRMQ",
                   "resource" => "new-cert"
                 },
-                protected: AcmeEx.Jws.unwrap(@body, "protected")
+                protected: Jws.unwrap(@body, "protected")
               }}
   end
 
   test "decode (bad)" do
-    assert AcmeEx.Jws.decode(@bad) == {:error, "Unable to verify data due to {:badmatch, false}"}
+    assert Jws.decode(@bad) == {:error, "Unable to verify data due to {:badmatch, false}"}
   end
 end
