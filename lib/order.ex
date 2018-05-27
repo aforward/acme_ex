@@ -35,15 +35,15 @@ defmodule AcmeEx.Order do
   def identifiers(order), do: order.domains |> Enum.map(&%{type: "dns", value: &1})
 
   def location(config, order, account) do
-    "#{config.site}/order/#{order_path(order, account)}"
+    "#{config.site}/order/#{encode_path(order, account)}"
   end
 
   def authorizations(config, order, account) do
-    ["#{config.site}/authorizations/#{order_path(order, account)}"]
+    ["#{config.site}/authorizations/#{encode_path(order, account)}"]
   end
 
   def finalize(config, order, account) do
-    "#{config.site}/finalize/#{order_path(order, account)}"
+    "#{config.site}/finalize/#{encode_path(order, account)}"
   end
 
   def expires(duration \\ 3600, now \\ nil) do
@@ -53,13 +53,13 @@ defmodule AcmeEx.Order do
     |> DateTime.to_iso8601()
   end
 
-  def order_path(order, account), do: "#{account.id}/#{order.id}"
+  def encode_path(order, account), do: "#{account.id}/#{order.id}"
 
   def challenge(config, order, account) do
     %{
       type: "http-01",
       status: order.status,
-      url: "#{config.site}/challenge/http/#{order_path(order, account)}",
+      url: "#{config.site}/challenge/http/#{encode_path(order, account)}",
       token: order.token
     }
   end

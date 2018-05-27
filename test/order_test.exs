@@ -57,7 +57,7 @@ defmodule AcmeEx.OrderTest do
   end
 
   test "order_path" do
-    assert "10/11" == Order.order_path(%{id: 11}, %{id: 10})
+    assert "10/11" == Order.encode_path(%{id: 11}, %{id: 10})
   end
 
   test "authorizations" do
