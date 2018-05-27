@@ -106,5 +106,4 @@ defmodule AcmeEx.JwsTest do
   test "decode (bad)" do
     assert AcmeEx.Jws.decode(@bad) == {:error, "Unable to verify data due to {:badmatch, false}"}
   end
-
 end

@@ -8,7 +8,7 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _configs) do
-    respond_body(conn, 405, "", [AcmeEx.Nonce.new() |> AcmeEx.Header.nonce()])
+    respond_body(conn, 405, "", [AcmeEx.Header.nonce()])
   end
 
   def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, configs) do
@@ -20,6 +20,14 @@ defmodule AcmeEx.Router do
       revokeCert: "#{configs.site}/revoke-cert",
       keyChange: "#{configs.site}/key-change"
     })
+  end
+
+  def call(%Plug.Conn{method: "POST", request_path: "/new-account"} = conn, _configs) do
+    conn
+    |> verify_request()
+    |> AcmeEx.Account.client_key()
+    |> AcmeEx.Account.new()
+    |> (&respond_json(conn, 201, &1, [AcmeEx.Header.nonce()])).()
   end
 
   # Call the Plug.Static directly so we can keep the configs
@@ -44,5 +52,26 @@ defmodule AcmeEx.Router do
     conn
     |> merge_resp_headers(headers)
     |> send_resp(status, body)
+  end
+
+  defp verify_request(conn) do
+    conn
+    |> read_body!()
+    |> AcmeEx.Jws.decode()
+    |> (fn {:ok, request} ->
+          request
+          |> get_in([:protected, "nonce"])
+          |> Base.decode64!(padding: false)
+          |> String.to_integer()
+          |> AcmeEx.Nonce.verify()
+
+          request
+        end).()
+  end
+
+  defp read_body!(conn) do
+    conn
+    |> read_body()
+    |> (fn {:ok, body, _conn} -> body end).()
   end
 end

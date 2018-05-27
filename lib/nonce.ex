@@ -1,7 +1,8 @@
 defmodule AcmeEx.Nonce do
   def new(), do: create() |> insert()
 
-  def next(), do: create() + 1
+  def next(), do: create() |> follow()
+  def follow(nonce), do: nonce + 1
 
   def verify(nonce) do
     case AcmeEx.Db.pop({:nonce, nonce}) do

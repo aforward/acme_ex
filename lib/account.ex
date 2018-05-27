@@ -1,4 +1,6 @@
 defmodule AcmeEx.Account do
+  def client_key(request), do: request.protected |> Map.fetch!("jwk")
+
   def new(client_key), do: create() |> insert(client_key)
 
   def fetch(client_key), do: AcmeEx.Db.fetch({:account, client_key})

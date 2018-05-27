@@ -1,4 +1,6 @@
 defmodule AcmeEx.Header do
+  def nonce(), do: AcmeEx.Nonce.new() |> nonce()
+
   def nonce(nonce) do
     {"replay-nonce", nonce |> AcmeEx.Nonce.encode()}
   end
