@@ -3,8 +3,8 @@ defmodule AcmeEx.Order do
 
   def new(domains, account, token \\ nil), do: domains |> create(token) |> insert(account)
 
-  def fetch(client_key, order_id) do
-    client_key
+  def fetch(client_key_or_id, order_id) do
+    client_key_or_id
     |> account_id()
     |> (&Db.fetch({:order, &1, order_id})).()
   end
@@ -19,8 +19,8 @@ defmodule AcmeEx.Order do
     }
   end
 
-  def update(client_key, order) do
-    client_key
+  def update(client_key_or_id, order) do
+    client_key_or_id
     |> account_id()
     |> (&Db.store({:order, &1, order.id}, order)).()
   end
@@ -55,6 +55,18 @@ defmodule AcmeEx.Order do
 
   def encode_path(order, account), do: "#{account.id}/#{order.id}"
 
+  def decode_path(order_path) do
+    order_path
+    |> String.split("/")
+    |> Enum.map(&String.to_integer(&1))
+    |> (fn [account_id, order_id] ->
+          {
+            fetch(account_id, order_id) |> ok!,
+            %{id: account_id}
+          }
+        end).()
+  end
+
   def challenge(config, order, account) do
     %{
       type: "http-01",
@@ -69,7 +81,9 @@ defmodule AcmeEx.Order do
     order
   end
 
-  defp account_id(client_key) do
+  defp account_id(id) when is_integer(id), do: id
+
+  defp account_id(client_key) when is_binary(client_key) do
     client_key
     |> Account.fetch()
     |> case do
@@ -77,4 +91,6 @@ defmodule AcmeEx.Order do
       _ -> raise "Unable to locate account #{client_key}"
     end
   end
+
+  defp ok!({:ok, obj}), do: obj
 end

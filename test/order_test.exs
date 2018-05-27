@@ -6,11 +6,21 @@ defmodule AcmeEx.OrderTest do
 
   test "new" do
     account = Account.new("abc124")
-    id = Nonce.next()
+    order_id = Nonce.next()
 
-    expected = %{id: id, status: :pending, cert: nil, domains: ["d1", "d2"], token: "xxx123"}
+    expected = %{
+      id: order_id,
+      status: :pending,
+      cert: nil,
+      domains: ["d1", "d2"],
+      token: "xxx123"
+    }
+
     assert expected == Order.new(["d1", "d2"], account, "xxx123")
-    assert {:ok, expected} == Order.fetch("abc124", id)
+    assert {:ok, expected} == Order.fetch("abc124", order_id)
+    assert {:ok, expected} == Order.fetch(account.id, order_id)
+
+    assert {expected, %{id: account.id}} == Order.decode_path("#{account.id}/#{order_id}")
   end
 
   test "new generate token" do
