@@ -1,8 +1,9 @@
 defmodule AcmeEx.RouterTest do
   use ExUnit.Case, async: false
   use Plug.Test
+  alias AcmeEx.{Router, Header, Nonce}
 
-  @opts AcmeEx.Router.init(site: "http://localhost:9999")
+  @opts Router.init(site: "http://localhost:9999")
   @body %{
           "payload" =>
             "ewogICJyZXNvdXJjZSI6ICJuZXctY2VydCIsCiAgImNzciI6ICJNSUlDaFRDQ0FXMENBUUl3QURDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTGFQZ3JOeWdzSFRBc1EzN3YxbkttdWhBVW5xaV93UGdxcF85OTgyUld6dkYwendLcnUxRlBOaG9Sa2JHU25OakQxb1RvR0JsV2FFNWJEVWtaWjBHQW1WeGpIM1ZuNEIzczBOMDlkTzFyNXdZcktNakhaZlVLaU02bnN2cW9GalJpZWxod2wzT2hWMW5xYmJKRmM5ZFJxUTlQc0xhLWRVLTdqbWRCREg2NXF4bmgxaS1PNFY4LWxJMVRQdVJnOFdHWlo1eXE3TEZ6SEZzN3lKNzdXekRyWmxXS3UzVzIwekUwSW54RnVRbUhIMnNQT3U5clFNNzlpRXpPWHZqY2xSOWZ5OXRGaS1wZ0FMem5RRjE2WjlLRi1xdHpRZEtpa3NaTU9SWm9CS2J2MTE1c2NUbEhxdkN2MDg5d0xzTWVEc3hvRkFpR2dJVzJncTVJVVhPdHVLbWIwQ0F3RUFBYUJBTUQ0R0NTcUdTSWIzRFFFSkRqRXhNQzh3TFFZRFZSMFJCQ1l3SklJSFptOXZMbUpoY29JTGQzZDNMbVp2Ynk1aVlYS0NER0pzYjJjdVptOXZMbUpoY2pBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQUxEUHBpRm9pbDRQYjVDeHh6RHRhYWZLTTdIRGtud1BfVVBJMkVVX1Z2dzJrQ3hXUGYwWUNLek15QlpPbElydmQ2SEtmUmk0QXRKLXdCbkJtQU9XR2dRM2JxZ0xKVEFQM1o5WHdwOERhR0NCc1VrQ3o3c2hzdHc2SUZlMHNsbVpTSXBQMjlub0U0Z3doNEpPeWdZV0tYX2hqdUp6RXhEa0VZRGR5a2psa2d6d0pSNlBZQmo4N05KTExDYlE1TE0yWHNPbTc0UzZMLWtXWTF0TV9wdkFBZjVmQ2FxcmF1QllPckhfUlZoMDM4bUhDY1dSalc3a2MtRkpnRzM2dlk5NUJseHJKZUdINVJDcWlHS2NIVElJSDRyVGJKak9pa2lmRDZLUkk0M25ZdzhQVE1HTWZSNnJiY0tGd0VQLWtkV2hVUEpEYURKTXpmX2pYOHoyLTNqYVJNUSIKfQ",
@@ -16,7 +17,7 @@ defmodule AcmeEx.RouterTest do
   defp http_call(route, method \\ :get, body \\ "") do
     method
     |> conn(route, body)
-    |> AcmeEx.Router.call(@opts)
+    |> Router.call(@opts)
   end
 
   test "/ returns hello world" do
@@ -45,27 +46,27 @@ defmodule AcmeEx.RouterTest do
   end
 
   test "HEAD /new-x" do
-    nonce = AcmeEx.Nonce.next()
+    nonce = Nonce.next()
     conn = http_call("/new-x", :head)
 
     assert conn.state == :sent
     assert conn.status == 405
 
-    assert AcmeEx.Header.filter(conn, "replay-nonce") == [AcmeEx.Header.nonce(nonce)]
+    assert Header.filter(conn, "replay-nonce") == [Header.nonce(nonce)]
 
     assert conn.resp_body == ""
   end
 
   test "POST /new-account" do
-    account_nonce = AcmeEx.Nonce.next()
-    reply_nonce = AcmeEx.Nonce.follow(account_nonce)
+    account_nonce = Nonce.next()
+    reply_nonce = Nonce.follow(account_nonce)
 
     conn = http_call("/new-account", :post, @body)
 
     assert conn.state == :sent
     assert conn.status == 201
 
-    assert AcmeEx.Header.filter(conn, "replay-nonce") == [AcmeEx.Header.nonce(reply_nonce)]
+    assert Header.filter(conn, "replay-nonce") == [Header.nonce(reply_nonce)]
 
     assert conn.resp_body |> Jason.decode!() == %{
              "contact" => [],

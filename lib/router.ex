@@ -1,5 +1,6 @@
 defmodule AcmeEx.Router do
   use Plug.Builder
+  alias AcmeEx.{Account, Header, Jws, Nonce}
 
   def init(opts), do: opts |> Map.new()
 
@@ -8,7 +9,7 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
-    respond_body(conn, 405, "", [AcmeEx.Header.nonce()])
+    respond_body(conn, 405, "", [Header.nonce()])
   end
 
   def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, config) do
@@ -25,9 +26,9 @@ defmodule AcmeEx.Router do
   def call(%Plug.Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
     conn
     |> verify_request()
-    |> AcmeEx.Account.client_key()
-    |> AcmeEx.Account.new()
-    |> (&respond_json(conn, 201, &1, [AcmeEx.Header.nonce()])).()
+    |> Account.client_key()
+    |> Account.new()
+    |> (&respond_json(conn, 201, &1, [Header.nonce()])).()
   end
 
   # Call the Plug.Static directly so we can keep the config
@@ -57,13 +58,13 @@ defmodule AcmeEx.Router do
   defp verify_request(conn) do
     conn
     |> read_body!()
-    |> AcmeEx.Jws.decode()
+    |> Jws.decode()
     |> (fn {:ok, request} ->
           request
           |> get_in([:protected, "nonce"])
           |> Base.decode64!(padding: false)
           |> String.to_integer()
-          |> AcmeEx.Nonce.verify()
+          |> Nonce.verify()
 
           request
         end).()
