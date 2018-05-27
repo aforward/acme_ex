@@ -55,6 +55,15 @@ defmodule AcmeEx.Order do
 
   def order_path(order, account), do: "#{account.id}/#{order.id}"
 
+  def challenge(config, order, account) do
+    %{
+      type: "http-01",
+      status: order.status,
+      url: "#{config.site}/challenge/http/#{order_path(order, account)}",
+      token: order.token
+    }
+  end
+
   defp insert(order, account) do
     Db.create({:order, account.id, order.id}, order)
     order

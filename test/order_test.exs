@@ -78,4 +78,13 @@ defmodule AcmeEx.OrderTest do
     assert "2018-09-20T11:11:12Z" == Order.expires(nil, ~N[2018-09-20 10:11:12])
     assert !is_nil(Order.expires())
   end
+
+  test "challenge" do
+    assert %{
+             type: "http-01",
+             status: "pending",
+             url: "http://localhost:9999/challenge/http/10/11",
+             token: "def456"
+           } == Order.challenge(@config, %{id: 11, status: "pending", token: "def456"}, %{id: 10})
+  end
 end
