@@ -2,6 +2,8 @@ defmodule AcmeEx.OrderTest do
   use ExUnit.Case, async: false
   alias AcmeEx.{Account, Order, Nonce}
 
+  @config %{site: "http://localhost:9999"}
+
   test "new" do
     account = Account.new("abc124")
     id = Nonce.next()
@@ -60,17 +62,15 @@ defmodule AcmeEx.OrderTest do
 
   test "authorizations" do
     assert ["http://localhost:9999/authorizations/10/11"] ==
-             Order.authorizations(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+             Order.authorizations(@config, %{id: 11}, %{id: 10})
   end
 
   test "location" do
-    assert "http://localhost:9999/order/10/11" ==
-             Order.location(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+    assert "http://localhost:9999/order/10/11" == Order.location(@config, %{id: 11}, %{id: 10})
   end
 
   test "finalize" do
-    assert "http://localhost:9999/finalize/10/11" ==
-             Order.finalize(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+    assert "http://localhost:9999/finalize/10/11" == Order.finalize(@config, %{id: 11}, %{id: 10})
   end
 
   test "expires" do
