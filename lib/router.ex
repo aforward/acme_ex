@@ -1,6 +1,6 @@
 defmodule AcmeEx.Router do
   use Plug.Builder
-  alias AcmeEx.{Account, Header, Jws, Nonce}
+  alias AcmeEx.{Account, Order, Header, Jws, Nonce}
 
   def init(opts), do: opts |> Map.new()
 
@@ -29,6 +29,26 @@ defmodule AcmeEx.Router do
     |> Account.client_key()
     |> Account.new()
     |> (&respond_json(conn, 201, &1, [Header.nonce()])).()
+  end
+
+  def call(%Plug.Conn{method: "POST", request_path: "/new-order"} = conn, config) do
+    conn
+    |> verify_request()
+    |> create_order()
+    |> (fn {order, account} ->
+          respond_json(
+            conn,
+            201,
+            %{
+              status: order.status,
+              expires: Order.expires(),
+              identifiers: Order.identifiers(order),
+              authorizations: Order.authorizations(config, order, account),
+              finalize: Order.finalize(config, order, account)
+            },
+            [Header.location(config, order, account), Header.nonce()]
+          )
+        end).()
   end
 
   # Call the Plug.Static directly so we can keep the config
@@ -67,6 +87,18 @@ defmodule AcmeEx.Router do
           |> Nonce.verify()
 
           request
+        end).()
+  end
+
+  defp create_order(request) do
+    request
+    |> Account.client_key()
+    |> Account.upsert()
+    |> (fn account ->
+          request
+          |> Order.domains()
+          |> Order.new(account)
+          |> (&{&1, account}).()
         end).()
   end
 
