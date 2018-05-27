@@ -1,7 +1,7 @@
 defmodule AcmeEx.RouterTest do
   use ExUnit.Case, async: false
   use Plug.Test
-  alias AcmeEx.{Router, Header, Nonce, Db}
+  alias AcmeEx.{Router, Header, Nonce, Order, Db}
 
   @opts Router.init(site: "http://localhost:9999")
 
@@ -119,5 +119,31 @@ defmodule AcmeEx.RouterTest do
            }
 
     assert !is_nil(Map.get(actual, "expires"))
+  end
+
+  test "GET /authorizations/{account}/{order}" do
+    account_nonce = Nonce.next()
+    order_nonce = Nonce.follow(account_nonce)
+
+    _conn = http_call("/new-order", :post, @order_body)
+    conn = http_call("/authorizations/#{account_nonce}/#{order_nonce}", :get)
+
+    {:ok, order} = Order.fetch(account_nonce, order_nonce)
+
+    assert conn.state == :sent
+    assert conn.status == 200
+
+    assert conn.resp_body |> Jason.decode!() == %{
+             "challenges" => [
+               %{
+                 "status" => "pending",
+                 "token" => order.token,
+                 "type" => "http-01",
+                 "url" => "http://localhost:9999/challenge/http/#{account_nonce}/#{order_nonce}"
+               }
+             ],
+             "identifier" => %{"type" => "dns", "value" => "localhost"},
+             "status" => "pending"
+           }
   end
 end

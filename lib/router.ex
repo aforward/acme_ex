@@ -51,6 +51,21 @@ defmodule AcmeEx.Router do
         end).()
   end
 
+  def call(
+        %Plug.Conn{method: "GET", request_path: "/authorizations/" <> order_path} = conn,
+        config
+      ) do
+    order_path
+    |> Order.decode_path()
+    |> (fn {order, account} ->
+          respond_json(conn, 200, %{
+            status: order.status,
+            identifier: %{type: "dns", value: "localhost"},
+            challenges: [Order.challenge(config, order, account)]
+          })
+        end).()
+  end
+
   # Call the Plug.Static directly so we can keep the config
   # for the other calls
   def call(conn, _opts) do
