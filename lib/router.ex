@@ -3,26 +3,26 @@ defmodule AcmeEx.Router do
 
   def init(opts), do: opts |> Map.new()
 
-  def call(%Plug.Conn{request_path: "/"} = conn, _configs) do
+  def call(%Plug.Conn{request_path: "/"} = conn, _config) do
     send_resp(conn, 200, "hello world")
   end
 
-  def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _configs) do
+  def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
     respond_body(conn, 405, "", [AcmeEx.Header.nonce()])
   end
 
-  def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, configs) do
+  def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, config) do
     respond_json(conn, 200, %{
-      newNonce: "#{configs.site}/new-nonce",
-      newAccount: "#{configs.site}/new-account",
-      newOrder: "#{configs.site}/new-order",
-      newAuthz: "#{configs.site}/new-authz",
-      revokeCert: "#{configs.site}/revoke-cert",
-      keyChange: "#{configs.site}/key-change"
+      newNonce: "#{config.site}/new-nonce",
+      newAccount: "#{config.site}/new-account",
+      newOrder: "#{config.site}/new-order",
+      newAuthz: "#{config.site}/new-authz",
+      revokeCert: "#{config.site}/revoke-cert",
+      keyChange: "#{config.site}/key-change"
     })
   end
 
-  def call(%Plug.Conn{method: "POST", request_path: "/new-account"} = conn, _configs) do
+  def call(%Plug.Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
     conn
     |> verify_request()
     |> AcmeEx.Account.client_key()
@@ -30,7 +30,7 @@ defmodule AcmeEx.Router do
     |> (&respond_json(conn, 201, &1, [AcmeEx.Header.nonce()])).()
   end
 
-  # Call the Plug.Static directly so we can keep the configs
+  # Call the Plug.Static directly so we can keep the config
   # for the other calls
   def call(conn, _opts) do
     [at: "/", from: "assets", only_matching: ~w(favicon)]
