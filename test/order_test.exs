@@ -63,6 +63,11 @@ defmodule AcmeEx.OrderTest do
              Order.authorizations(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
   end
 
+  test "location" do
+    assert "http://localhost:9999/order/10/11" ==
+             Order.location(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+  end
+
   test "finalize" do
     assert "http://localhost:9999/finalize/10/11" ==
              Order.finalize(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})

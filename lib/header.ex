@@ -1,8 +1,14 @@
 defmodule AcmeEx.Header do
-  def nonce(), do: AcmeEx.Nonce.new() |> nonce()
+  alias AcmeEx.{Nonce, Order}
+
+  def nonce(), do: Nonce.new() |> nonce()
 
   def nonce(nonce) do
-    {"replay-nonce", nonce |> AcmeEx.Nonce.encode()}
+    {"replay-nonce", nonce |> Nonce.encode()}
+  end
+
+  def location(config, order, account) do
+    {"location", Order.location(config, order, account)}
   end
 
   def filter(conn, name) do

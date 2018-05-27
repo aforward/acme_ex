@@ -34,6 +34,10 @@ defmodule AcmeEx.Order do
 
   def identifiers(order), do: order.domains |> Enum.map(&%{type: "dns", value: &1})
 
+  def location(config, order, account) do
+    "#{config.site}/order/#{order_path(order, account)}"
+  end
+
   def authorizations(config, order, account) do
     ["#{config.site}/authorizations/#{order_path(order, account)}"]
   end
