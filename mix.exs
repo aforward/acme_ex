@@ -6,6 +6,7 @@ defmodule AcmeEx.Mixfile do
 
   @deps [
     {:jason, "~> 1.0"},
+    {:jose, "~> 1.8"},
     {:cowboy, "~> 2.0"},
     {:plug, "~> 1.0"}
     # { :earmark, ">0.1.5" },

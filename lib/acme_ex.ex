@@ -5,6 +5,8 @@ defmodule AcmeEx do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
+    JOSE.json_module(AcmeEx.Jason)
+
     children = [
       {Plug.Adapters.Cowboy2,
        scheme: :http,
