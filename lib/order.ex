@@ -38,8 +38,8 @@ defmodule AcmeEx.Order do
     "#{config.site}/order/#{encode_path(order, account)}"
   end
 
-  def authorizations(config, order, account) do
-    ["#{config.site}/authorizations/#{encode_path(order, account)}"]
+  def authorization(config, order, account) do
+    "#{config.site}/authorizations/#{encode_path(order, account)}"
   end
 
   def finalize(config, order, account) do

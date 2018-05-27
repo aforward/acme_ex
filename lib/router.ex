@@ -43,7 +43,7 @@ defmodule AcmeEx.Router do
               status: order.status,
               expires: Order.expires(),
               identifiers: Order.identifiers(order),
-              authorizations: Order.authorizations(config, order, account),
+              authorizations: [Order.authorization(config, order, account)],
               finalize: Order.finalize(config, order, account)
             },
             [Header.location(config, order, account), Header.nonce()]

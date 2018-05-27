@@ -70,9 +70,9 @@ defmodule AcmeEx.OrderTest do
     assert "10/11" == Order.encode_path(%{id: 11}, %{id: 10})
   end
 
-  test "authorizations" do
-    assert ["http://localhost:9999/authorizations/10/11"] ==
-             Order.authorizations(@config, %{id: 11}, %{id: 10})
+  test "authorization" do
+    assert "http://localhost:9999/authorizations/10/11" ==
+             Order.authorization(@config, %{id: 11}, %{id: 10})
   end
 
   test "location" do
