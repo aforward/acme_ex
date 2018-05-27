@@ -25,6 +25,32 @@ defmodule AcmeEx.Order do
     |> (&Db.store({:order, &1, order.id}, order)).()
   end
 
+  def domains(request) do
+    request.payload
+    |> Map.fetch!("identifiers")
+    |> Enum.filter(&(Map.fetch!(&1, "type") == "dns"))
+    |> Enum.map(&Map.fetch!(&1, "value"))
+  end
+
+  def identifiers(order), do: order.domains |> Enum.map(&%{type: "dns", value: &1})
+
+  def authorizations(config, order, account) do
+    ["#{config.site}/authorizations/#{order_path(order, account)}"]
+  end
+
+  def finalize(config, order, account) do
+    "#{config.site}/finalize/#{order_path(order, account)}"
+  end
+
+  def expires(duration \\ 3600, now \\ nil) do
+    (now || NaiveDateTime.utc_now())
+    |> NaiveDateTime.add(duration || 3600, :second)
+    |> DateTime.from_naive!("Etc/UTC")
+    |> DateTime.to_iso8601()
+  end
+
+  def order_path(order, account), do: "#{account.id}/#{order.id}"
+
   defp insert(order, account) do
     Db.create({:order, account.id, order.id}, order)
     order

@@ -33,4 +33,44 @@ defmodule AcmeEx.OrderTest do
 
     assert {:ok, new_order} == Order.fetch("abc125", id)
   end
+
+  test "domains" do
+    assert ["foo.bar", "www.foo.bar", "blog.foo.bar"] ==
+             AcmeEx.Order.domains(%{
+               payload: %{
+                 "identifiers" => [
+                   %{"type" => "dns", "value" => "foo.bar"},
+                   %{"type" => "dns", "value" => "www.foo.bar"},
+                   %{"type" => "dns", "value" => "blog.foo.bar"}
+                 ],
+                 "resource" => "new-order",
+                 "status" => "pending"
+               }
+             })
+  end
+
+  test "identifiers" do
+    assert [%{type: "dns", value: "d1"}, %{type: "dns", value: "d2"}] ==
+             Order.identifiers(%{domains: ["d1", "d2"]})
+  end
+
+  test "order_path" do
+    assert "10/11" == Order.order_path(%{id: 11}, %{id: 10})
+  end
+
+  test "authorizations" do
+    assert ["http://localhost:9999/authorizations/10/11"] ==
+             Order.authorizations(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+  end
+
+  test "finalize" do
+    assert "http://localhost:9999/finalize/10/11" ==
+             Order.finalize(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+  end
+
+  test "expires" do
+    assert "2018-09-20T11:11:13Z" == Order.expires(3601, ~N[2018-09-20 10:11:12])
+    assert "2018-09-20T11:11:12Z" == Order.expires(nil, ~N[2018-09-20 10:11:12])
+    assert !is_nil(Order.expires())
+  end
 end
