@@ -11,6 +11,10 @@ defmodule AcmeEx.Header do
     {"location", Order.location(config, order, account)}
   end
 
+  def authorization(config, order, account) do
+    {"link", "<#{Order.authorization(config, order, account)}>;rel=\"up\""}
+  end
+
   def filter(conn, name) do
     conn.resp_headers
     |> Enum.filter(fn {k, _v} -> k == name end)

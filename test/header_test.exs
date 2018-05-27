@@ -11,4 +11,9 @@ defmodule AcmeEx.HeaderTest do
     assert {"location", "http://localhost:9999/order/10/11"} ==
              Header.location(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
   end
+
+  test "authorization" do
+    assert {"link", "<http://localhost:9999/authorizations/10/11>;rel=\"up\""} ==
+             Header.authorization(%{site: "http://localhost:9999"}, %{id: 11}, %{id: 10})
+  end
 end
