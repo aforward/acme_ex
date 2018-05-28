@@ -1,6 +1,6 @@
 defmodule AcmeEx.Router do
   use Plug.Builder
-  alias AcmeEx.{Account, Order, Header, Jws, Nonce}
+  alias AcmeEx.{Account, Order, Header, Jws, Nonce, Cert}
 
   def init(opts), do: opts |> Map.new()
 
@@ -66,6 +66,21 @@ defmodule AcmeEx.Router do
         end).()
   end
 
+  def call(
+        %Plug.Conn{method: "POST", request_path: "/finalize/" <> order_path} = conn,
+        config
+      ) do
+    conn
+    |> verify_order(order_path)
+    |> (fn {request, {_order, account} = id} ->
+          request
+          |> Cert.generate!(id)
+          |> update_cert(id)
+          |> (&Order.to_summary(config, &1, account)).()
+          |> (&respond_json(conn, 200, &1, [Header.nonce()])).()
+        end).()
+  end
+
   # Call the Plug.Static directly so we can keep the config
   # for the other calls
   def call(conn, _opts) do
@@ -105,6 +120,12 @@ defmodule AcmeEx.Router do
         end).()
   end
 
+  defp verify_order(conn, order_path) do
+    conn
+    |> verify_request()
+    |> (&{&1, Order.decode_path(order_path)}).()
+  end
+
   defp create_order(request) do
     request
     |> Account.client_key()
@@ -115,6 +136,15 @@ defmodule AcmeEx.Router do
           |> Order.new(account)
           |> (&{&1, account}).()
         end).()
+  end
+
+  defp update_cert(cert, {order, account}) do
+    account.id
+    |> Order.update(%{order | cert: cert})
+    |> case do
+      {:ok, updated_order} -> updated_order
+      {:error, reason} -> raise reason
+    end
   end
 
   defp read_body!(conn) do
