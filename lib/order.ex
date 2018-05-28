@@ -80,6 +80,14 @@ defmodule AcmeEx.Order do
     }
   end
 
+  def to_summary(config, order, account) do
+    %{
+      status: order.status,
+      identifier: %{type: "dns", value: "localhost"},
+      certificate: "#{config.site}/cert/#{encode_path(order, account)}"
+    }
+  end
+
   defp insert(order, account) do
     Db.create({:order, account.id, order.id}, order)
     order

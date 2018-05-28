@@ -98,4 +98,13 @@ defmodule AcmeEx.OrderTest do
            } ==
              Order.to_challenge(@config, %{id: 11, status: "pending", token: "def456"}, %{id: 10})
   end
+
+  test "to_summary" do
+    assert %{
+             status: "pending",
+             certificate: "http://localhost:9999/cert/10/11",
+             identifier: %{type: "dns", value: "localhost"}
+           } ==
+             Order.to_summary(@config, %{id: 11, status: "pending", token: "def456"}, %{id: 10})
+  end
 end
