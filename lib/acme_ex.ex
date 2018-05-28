@@ -22,4 +22,6 @@ defmodule AcmeEx do
 
     Supervisor.start_link(children, opts)
   end
+
+  def dir(), do: Application.app_dir(:acme_ex)
 end
