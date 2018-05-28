@@ -1,18 +1,19 @@
 defmodule AcmeEx.Router do
   use Plug.Builder
+  alias Plug.Conn
   alias AcmeEx.{Account, Order, Header, Jws, Nonce, Cert}
 
   def init(opts), do: opts |> Map.new()
 
-  def call(%Plug.Conn{request_path: "/"} = conn, _config) do
+  def call(%Conn{request_path: "/"} = conn, _config) do
     send_resp(conn, 200, "hello world")
   end
 
-  def call(%Plug.Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
+  def call(%Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
     respond_body(conn, 405, "", [Header.nonce()])
   end
 
-  def call(%Plug.Conn{method: "GET", request_path: "/directory"} = conn, config) do
+  def call(%Conn{method: "GET", request_path: "/directory"} = conn, config) do
     respond_json(conn, 200, %{
       newNonce: "#{config.site}/new-nonce",
       newAccount: "#{config.site}/new-account",
@@ -23,7 +24,7 @@ defmodule AcmeEx.Router do
     })
   end
 
-  def call(%Plug.Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
+  def call(%Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
     conn
     |> verify_request()
     |> Account.client_key()
@@ -31,7 +32,7 @@ defmodule AcmeEx.Router do
     |> (&respond_json(conn, 201, &1, [Header.nonce()])).()
   end
 
-  def call(%Plug.Conn{method: "POST", request_path: "/new-order"} = conn, config) do
+  def call(%Conn{method: "POST", request_path: "/new-order"} = conn, config) do
     conn
     |> verify_request()
     |> create_order()
@@ -51,21 +52,15 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(
-        %Plug.Conn{method: "GET", request_path: "/order/" <> order_path} = conn,
-        config
-      ) do
-    order_path
+  def call(%Conn{method: "GET", request_path: "/order/" <> path} = conn, config) do
+    path
     |> Order.decode_path()
     |> (fn {order, account} -> Order.to_summary(config, order, account) end).()
     |> (&respond_json(conn, 200, &1)).()
   end
 
-  def call(
-        %Plug.Conn{method: "GET", request_path: "/authorizations/" <> order_path} = conn,
-        config
-      ) do
-    order_path
+  def call(%Conn{method: "GET", request_path: "/authorizations/" <> path} = conn, config) do
+    path
     |> Order.decode_path()
     |> (fn {order, account} ->
           respond_json(conn, 200, %{
@@ -76,12 +71,9 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(
-        %Plug.Conn{method: "POST", request_path: "/finalize/" <> order_path} = conn,
-        config
-      ) do
+  def call(%Conn{method: "POST", request_path: "/finalize/" <> path} = conn, config) do
     conn
-    |> verify_order(order_path)
+    |> verify_order(path)
     |> (fn {request, {_order, account} = id} ->
           request
           |> Cert.generate!(id)
@@ -91,11 +83,8 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(
-        %Plug.Conn{method: "GET", request_path: "/cert/" <> order_path} = conn,
-        _config
-      ) do
-    order_path
+  def call(%Conn{method: "GET", request_path: "/cert/" <> path} = conn, _config) do
+    path
     |> Order.decode_path()
     |> (fn {order, _account} -> order.cert end).()
     |> (&respond_body(conn, 200, &1)).()
@@ -140,10 +129,10 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  defp verify_order(conn, order_path) do
+  defp verify_order(conn, path) do
     conn
     |> verify_request()
-    |> (&{&1, Order.decode_path(order_path)}).()
+    |> (&{&1, Order.decode_path(path)}).()
   end
 
   defp create_order(request) do
