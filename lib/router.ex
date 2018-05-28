@@ -52,6 +52,16 @@ defmodule AcmeEx.Router do
   end
 
   def call(
+        %Plug.Conn{method: "GET", request_path: "/order/" <> order_path} = conn,
+        config
+      ) do
+    order_path
+    |> Order.decode_path()
+    |> (fn {order, account} -> Order.to_summary(config, order, account) end).()
+    |> (&respond_json(conn, 200, &1)).()
+  end
+
+  def call(
         %Plug.Conn{method: "GET", request_path: "/authorizations/" <> order_path} = conn,
         config
       ) do

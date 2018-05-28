@@ -101,7 +101,7 @@ defmodule AcmeEx.RouterTest do
            }
   end
 
-  test "POST /new-order" do
+  test "POST /new-order (and GET /order/{account}/{order})" do
     account_nonce = Nonce.next()
     order_nonce = Nonce.follow(account_nonce)
     reply_nonce = Nonce.follow(order_nonce)
@@ -129,6 +129,16 @@ defmodule AcmeEx.RouterTest do
            }
 
     assert !is_nil(Map.get(actual, "expires"))
+
+    conn = http_call("/order/#{account_nonce}/#{order_nonce}", :get)
+    assert conn.state == :sent
+    assert conn.status == 200
+
+    assert conn.resp_body |> Jason.decode!() == %{
+             "certificate" => "http://localhost:9999/cert/#{account_nonce}/#{order_nonce}",
+             "identifier" => %{"type" => "dns", "value" => "localhost"},
+             "status" => "pending"
+           }
   end
 
   test "GET /authorizations/{account}/{order}" do
