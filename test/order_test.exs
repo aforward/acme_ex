@@ -41,7 +41,7 @@ defmodule AcmeEx.OrderTest do
     _ = Order.new(["d1", "d2"], account, "xxx123")
     new_order = %{id: id, status: :pending, cert: nil, domains: ["d1", "d3"], token: "xxx124"}
 
-    Order.update("abc125", new_order)
+    assert Order.update("abc125", new_order) == {:ok, new_order}
 
     assert {:ok, new_order} == Order.fetch("abc125", id)
   end

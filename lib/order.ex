@@ -23,6 +23,10 @@ defmodule AcmeEx.Order do
     client_key_or_id
     |> account_id()
     |> (&Db.store({:order, &1, order.id}, order)).()
+    |> case do
+      true -> {:ok, order}
+      _ -> {:error, "Unable to update order #{client_key_or_id}/#{order.id}"}
+    end
   end
 
   def domains(request) do
