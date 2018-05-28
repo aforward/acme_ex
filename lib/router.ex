@@ -61,7 +61,7 @@ defmodule AcmeEx.Router do
           respond_json(conn, 200, %{
             status: order.status,
             identifier: %{type: "dns", value: "localhost"},
-            challenges: [Order.challenge(config, order, account)]
+            challenges: [Order.to_challenge(config, order, account)]
           })
         end).()
   end

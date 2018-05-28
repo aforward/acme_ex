@@ -71,7 +71,7 @@ defmodule AcmeEx.Order do
         end).()
   end
 
-  def challenge(config, order, account) do
+  def to_challenge(config, order, account) do
     %{
       type: "http-01",
       status: order.status,

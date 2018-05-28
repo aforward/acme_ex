@@ -89,12 +89,13 @@ defmodule AcmeEx.OrderTest do
     assert !is_nil(Order.expires())
   end
 
-  test "challenge" do
+  test "to_challenge" do
     assert %{
              type: "http-01",
              status: "pending",
              url: "http://localhost:9999/challenge/http/10/11",
              token: "def456"
-           } == Order.challenge(@config, %{id: 11, status: "pending", token: "def456"}, %{id: 10})
+           } ==
+             Order.to_challenge(@config, %{id: 11, status: "pending", token: "def456"}, %{id: 10})
   end
 end
