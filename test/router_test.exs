@@ -168,7 +168,7 @@ defmodule AcmeEx.RouterTest do
   end
 
   @tag :external
-  test "POST /finalize/{account}/{order}" do
+  test "POST /finalize/{account}/{order} (and GET /cert/{account}/{order})" do
     account_nonce = Nonce.next()
     order_nonce = Nonce.follow(account_nonce)
 
@@ -188,5 +188,10 @@ defmodule AcmeEx.RouterTest do
              "identifier" => %{"type" => "dns", "value" => "localhost"},
              "status" => "pending"
            }
+
+    conn = http_call("/cert/#{account_nonce}/#{order_nonce}", :get)
+    assert conn.state == :sent
+    assert conn.status == 200
+    assert conn.resp_body == order.cert
   end
 end

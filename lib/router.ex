@@ -91,6 +91,16 @@ defmodule AcmeEx.Router do
         end).()
   end
 
+  def call(
+        %Plug.Conn{method: "GET", request_path: "/cert/" <> order_path} = conn,
+        _config
+      ) do
+    order_path
+    |> Order.decode_path()
+    |> (fn {order, _account} -> order.cert end).()
+    |> (&respond_body(conn, 200, &1)).()
+  end
+
   # Call the Plug.Static directly so we can keep the config
   # for the other calls
   def call(conn, _opts) do
@@ -109,7 +119,7 @@ defmodule AcmeEx.Router do
     )
   end
 
-  defp respond_body(conn, status, body, headers) do
+  defp respond_body(conn, status, body, headers \\ []) do
     conn
     |> merge_resp_headers(headers)
     |> send_resp(status, body)
