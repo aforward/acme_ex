@@ -15,9 +15,15 @@ defmodule AcmeEx.Website do
     |> send_resp(200, "badtoken.badchallenge")
   end
 
-  def call(conn, _opts) do
+  def call(%Plug.Conn{request_path: "/.well-known/acme-challenge/unknowntoken"} = conn, _opts) do
     conn
     |> put_resp_content_type("text/plain")
     |> send_resp(404, "this is not the challenge you are looking for")
+  end
+
+  def call(conn, _opts) do
+    conn
+    |> put_resp_content_type("text/plain")
+    |> send_resp(404, "no idea what you are asking for")
   end
 end

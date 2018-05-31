@@ -8,16 +8,8 @@ defmodule AcmeEx.ChallengeTest do
   @challenge "goodtoken.goodthumb"
 
   setup do
-    {:ok, _pid} = Plug.Adapters.Cowboy2.http(AcmeEx.Website, [], port: 4848)
-    {:ok, _pid} = Plug.Adapters.Cowboy2.http(AcmeEx.Cms, [], port: 4849)
-    {:ok, _pid} = Plug.Adapters.Cowboy2.http(AcmeEx.Blog, [], port: 4850)
-
-    on_exit(fn ->
-      Plug.Adapters.Cowboy2.shutdown(AcmeEx.Website.HTTP)
-      Plug.Adapters.Cowboy2.shutdown(AcmeEx.Cms.HTTP)
-      Plug.Adapters.Cowboy2.shutdown(AcmeEx.Blog.HTTP)
-    end)
-
+    AcmeEx.Apps.start()
+    on_exit(fn -> AcmeEx.Apps.stop() end)
     :ok
   end
 
