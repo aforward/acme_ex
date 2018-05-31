@@ -16,6 +16,9 @@ defmodule AcmeEx.Mixfile do
 
   @aliases []
 
+  defp elixirc_paths(:prod), do: ["lib"]
+  defp elixirc_paths(_), do: elixirc_paths(:prod) ++ ["test/support"]
+
   # ------------------------------------------------------------
 
   def project do
@@ -27,7 +30,7 @@ defmodule AcmeEx.Mixfile do
       elixir: ">= 1.6.0",
       deps: @deps,
       aliases: @aliases,
-      elixirc_paths: ["lib"],
+      elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: in_production
     ]
   end

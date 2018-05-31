@@ -7,20 +7,18 @@ defmodule AcmeEx do
 
     JOSE.json_module(AcmeEx.Jason)
 
-    children = [
-      {Plug.Adapters.Cowboy2,
-       scheme: :http,
-       plug: {AcmeEx.Router, [site: "http://localhost:4002"]},
-       options: [port: 4002]},
-      AcmeEx.Db
-    ]
-
-    opts = [
+    Supervisor.start_link(
+      [
+        {Plug.Adapters.Cowboy2,
+         scheme: :http,
+         plug: {AcmeEx.Router, [site: "http://localhost:4002"]},
+         options: [port: 4002]},
+        AcmeEx.Db,
+        {Task.Supervisor, name: AcmeEx.ChallengeSupervisor, restart: :transient, max_restarts: 2}
+      ],
       strategy: :one_for_one,
-      name: AcmeEx.Supervisor
-    ]
-
-    Supervisor.start_link(children, opts)
+      name: AcmeEx.Component
+    )
   end
 
   def dir(), do: Application.app_dir(:acme_ex)
