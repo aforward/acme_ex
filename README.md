@@ -1,6 +1,6 @@
 # AcmeEx
 
-> TODO: Add description**
+Run a local Let's Encrypt Acme verifier
 
 
 ## Installation
