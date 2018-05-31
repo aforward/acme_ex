@@ -21,6 +21,12 @@ defmodule AcmeEx.Website do
     |> send_resp(404, "this is not the challenge you are looking for")
   end
 
+  def call(%Plug.Conn{request_path: "/.well-known/acme-challenge/" <> token} = conn, _opts) do
+    conn
+    |> put_resp_content_type("text/plain")
+    |> send_resp(200, "#{token}.iwCnbz72nRK1COrYZEgm2hvdPQ2oNnAwPxYd1Rk8CqU")
+  end
+
   def call(conn, _opts) do
     conn
     |> put_resp_content_type("text/plain")

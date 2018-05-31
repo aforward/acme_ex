@@ -1,9 +1,7 @@
 defmodule AcmeEx.RouterTest do
   use ExUnit.Case, async: false
   use Plug.Test
-  alias AcmeEx.{Router, Header, Nonce, Order, Db}
-
-  @opts Router.init(site: "http://localhost:9999")
+  alias AcmeEx.{Router, Header, Nonce, Order, Db, Challenge}
 
   @account_body %{
                   "payload" =>
@@ -25,6 +23,16 @@ defmodule AcmeEx.RouterTest do
                   }
                   |> Jason.encode!()
 
+  @challenge_order_body %{
+                          "payload" =>
+                            "ewogICJyZXNvdXJjZSI6ICJjaGFsbGVuZ2UiLAogICJrZXlBdXRob3JpemF0aW9uIjogInUxajR5cXc0T2swdzZ3ejA3bEtLZUEuaXdDbmJ6NzJuUksxQ09yWVpFZ20yaHZkUFEyb05uQXdQeFlkMVJrOENxVSIsCiAgInR5cGUiOiAiaHR0cC0wMSIKfQ",
+                          "protected" =>
+                            "eyJhbGciOiAiUlMyNTYiLCAiandrIjogeyJuIjogInZLQkJTSm1BX3ppY2RIdnhVWUNsVEIwRks4VFVaQnhPaV92bWhGZW9FZ0FpenlBcFNZeDdCb082QkpNTFBWYUM2NGRadjhnQ0lGcE9GSmh5N0tBaF83RmxfaXMxY19fQzhRRnk4X2o0QzBsODFBNWxzS1ZBTEJ5V2NXU29oOUJwc0VJU3BtcWdmLXVSeDJ3d0RvN0NIUVZwX2pXSkl4RGRzbXpiVHRHSW1tTmZzRk1pMEVITXZKeXpDLUlOUEt2aW5sc2FuR1Q0aUNaelp3Y3NJTGliOVNLNkl6NkpKWlVjNGdUVG5VWEJFRGdDVXh3YWVwYVVHeDJ4cW1tMHp4cHhkS1dBMm9WYW9DWVNneUtyVjNIczlJa2w4S1puUzlmSTZydTdwbkh0cjgza0F2aFpuYjhLT2lwYkFQUHUwYWRsUGI4RG1SRGdkSjd5Ym9rS2ZfSTB4dyIsICJlIjogIkFRQUIiLCAia3R5IjogIlJTQSJ9LCAibm9uY2UiOiAiTkEiLCAidXJsIjogImh0dHA6Ly9sb2NhbGhvc3Q6NDAwMi9jaGFsbGVuZ2UvaHR0cC8yLzMifQ",
+                          "signature" =>
+                            "ljuYYUrAlQFOQExXZ9YHR621gKjhggOhWUvD_UWGCLDLAzjYqe9KgEhtRVPs7Phi15I39hLHkWNyxNVWLXWKlrbdyPNBh52sIyxZDE0ZdlsIO28NN0jHtDhAVw8gtsi7OUDokFwhgWEsmphaGChCyLrgEqELNotSsqa4mMbNg63NnYKRCIuZtoksOYn1-0S63BKxxPa3NDYAKAd8cWfy1UQhX-A3Qid2x6yZ2MKnCXvPPVrXQ5iny8EuEUIZyGMsRGASSONZfdoW3R6ms4us92iRvcUSJfduVld95oc5Ev3re3UnsBnWlohPoN3I-ENlT8wgmVDZ20ALWtuOVH5Liw"
+                        }
+                        |> Jason.encode!()
+
   @finalize_order_body %{
                          "payload" =>
                            "ewogICJyZXNvdXJjZSI6ICJuZXctY2VydCIsCiAgImNzciI6ICJNSUlDaFRDQ0FXMENBUUl3QURDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTGotRjNtcEhhbHM5aDZVSkRXbmZFRndJaVUzSlUyai1JXzZzS2UwVS02U3NfMHBhckl5M1ZoWGZuUll5QlhERnFobTk2UEV2SGQzMFBoY1dzeEVYU3UtaVlvbVI0Y05yd05RaU9sMjJXcWdVS0FuTWpMZDd0VGV1QTJDWVQ5b2x2d0FNZFNMd0xtcjVjak51dkVyMi01QjRoU01ZbkJBdzFMem5GdWVodkNUakJpa0hhRDhNb0JfbHlCd3Z1YWlQbDlNQ2lmUTJuaVlTcXZCTE1ZZmdfZXd0ekFIdHlWWWgyQzdJOTQ3Y01ORE1fNXItWGtCQ3kxRHlNaHk5UGxjcUJVYWZubkR0MkVyQjRjdEQ2dGFvbGEzcF9Vc1JwQVozaWpCa205VVZpcHBLTm44NlRPSHE0LXQ3Nnl2YjRhc1lESTJJd0NoRnZQajYyZ1YySHBScmMwQ0F3RUFBYUJBTUQ0R0NTcUdTSWIzRFFFSkRqRXhNQzh3TFFZRFZSMFJCQ1l3SklJSFptOXZMbUpoY29JTGQzZDNMbVp2Ynk1aVlYS0NER0pzYjJjdVptOXZMbUpoY2pBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQVo2TUkxU2xJNHhwcDVDZjZGREdtZy1MSE9lT2FqRTFwTTNqNTdfSmxzUl94Uk0ydm5WaDkxWUhJTzBVLUtmTGZxLUNJVk1FWmFNbDlrTll2STJCUUNNZnVzejBQU2UyRjNvTHZiVEt4Q0lJaFRZUS1qNnplVF9CajBBbklyRVdlQmt0V1BKclp6MWI3Wm8yeUMzTDh4aWVOX1ktNEJNbElBRHJGUUlXcEpyc0l3OHVhd183QzFTeEZGTE13T3BmQ3BPd3htYnBxdTJTS1pJUnhtRmQ3R1hjb3RpRmN4WWdwZHFtTGNjTHl2WDNweDRSWEJ5cXhtdFJuYjFEZy0ta1RXTExBZ2FMX24yblJyT3o5MmFfR0ppVnpRNFcwdHptdVhqZHA0SHhtWWxfSlIzVlpWWTE3R2ZUNXYxbDBIbXl0aWRMd1ZZb1YwWC02LUVoRVhESzFoQSIKfQ",
@@ -35,15 +43,28 @@ defmodule AcmeEx.RouterTest do
                        }
                        |> Jason.encode!()
 
+  def opts() do
+    Router.init(
+      site: "http://localhost:4848",
+      dns: %{
+        "foo.bar" => fn -> "localhost:4848" end,
+        "www.foo.bar" => fn -> "localhost:4849" end,
+        "blog.foo.bar" => fn -> "localhost:4848" end
+      }
+    )
+  end
+
   setup _context do
     Db.reset()
+    AcmeEx.Apps.start()
+    on_exit(fn -> AcmeEx.Apps.stop() end)
     :ok
   end
 
   defp http_call(route, method \\ :get, body \\ "") do
     method
     |> conn(route, body)
-    |> Router.call(@opts)
+    |> Router.call(opts())
   end
 
   test "/ returns hello world" do
@@ -62,12 +83,12 @@ defmodule AcmeEx.RouterTest do
     assert conn.status == 200
 
     assert conn.resp_body |> Jason.decode!() == %{
-             "keyChange" => "http://localhost:9999/key-change",
-             "newAccount" => "http://localhost:9999/new-account",
-             "newAuthz" => "http://localhost:9999/new-authz",
-             "newNonce" => "http://localhost:9999/new-nonce",
-             "newOrder" => "http://localhost:9999/new-order",
-             "revokeCert" => "http://localhost:9999/revoke-cert"
+             "keyChange" => "http://localhost:4848/key-change",
+             "newAccount" => "http://localhost:4848/new-account",
+             "newAuthz" => "http://localhost:4848/new-authz",
+             "newNonce" => "http://localhost:4848/new-nonce",
+             "newOrder" => "http://localhost:4848/new-order",
+             "revokeCert" => "http://localhost:4848/revoke-cert"
            }
   end
 
@@ -118,9 +139,9 @@ defmodule AcmeEx.RouterTest do
     assert actual |> Map.delete("expires") == %{
              "status" => "pending",
              "authorizations" => [
-               "http://localhost:9999/authorizations/#{account_nonce}/#{order_nonce}"
+               "http://localhost:4848/authorizations/#{account_nonce}/#{order_nonce}"
              ],
-             "finalize" => "http://localhost:9999/finalize/#{account_nonce}/#{order_nonce}",
+             "finalize" => "http://localhost:4848/finalize/#{account_nonce}/#{order_nonce}",
              "identifiers" => [
                %{"type" => "dns", "value" => "foo.bar"},
                %{"type" => "dns", "value" => "www.foo.bar"},
@@ -135,7 +156,7 @@ defmodule AcmeEx.RouterTest do
     assert conn.status == 200
 
     assert conn.resp_body |> Jason.decode!() == %{
-             "certificate" => "http://localhost:9999/cert/#{account_nonce}/#{order_nonce}",
+             "certificate" => "http://localhost:4848/cert/#{account_nonce}/#{order_nonce}",
              "identifier" => %{"type" => "dns", "value" => "localhost"},
              "status" => "pending"
            }
@@ -159,12 +180,44 @@ defmodule AcmeEx.RouterTest do
                  "status" => "pending",
                  "token" => order.token,
                  "type" => "http-01",
-                 "url" => "http://localhost:9999/challenge/http/#{account_nonce}/#{order_nonce}"
+                 "url" => "http://localhost:4848/challenge/http/#{account_nonce}/#{order_nonce}"
                }
              ],
              "identifier" => %{"type" => "dns", "value" => "localhost"},
              "status" => "pending"
            }
+  end
+
+  @tag :external
+  test "POST /challenge/http/{account}/{order}" do
+    account_nonce = Nonce.next()
+    order_nonce = Nonce.follow(account_nonce)
+
+    _conn = http_call("/new-order", :post, @new_order_body)
+    {:ok, _} = Order.fetch(account_nonce, order_nonce)
+
+    conn =
+      http_call("/challenge/http/#{account_nonce}/#{order_nonce}", :post, @challenge_order_body)
+
+    assert conn.state == :sent
+    assert conn.status == 200
+
+    reply = conn.resp_body |> Jason.decode!()
+
+    assert reply |> Map.delete("token") == %{
+             "status" => "pending",
+             "type" => "http-01",
+             "url" => "http://localhost:4848/challenge/http/#{account_nonce}/#{order_nonce}"
+           }
+
+    assert !is_nil(reply["token"])
+
+    {:ok, order} = Order.fetch(account_nonce, order_nonce)
+    assert order.status == :pending
+
+    Challenge.await_all()
+    {:ok, order} = Order.fetch(account_nonce, order_nonce)
+    assert order.status == :valid
   end
 
   @tag :external
@@ -184,7 +237,7 @@ defmodule AcmeEx.RouterTest do
     assert conn.status == 200
 
     assert conn.resp_body |> Jason.decode!() == %{
-             "certificate" => "http://localhost:9999/cert/#{account_nonce}/#{order_nonce}",
+             "certificate" => "http://localhost:4848/cert/#{account_nonce}/#{order_nonce}",
              "identifier" => %{"type" => "dns", "value" => "localhost"},
              "status" => "pending"
            }

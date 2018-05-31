@@ -71,6 +71,24 @@ defmodule AcmeEx.Router do
         end).()
   end
 
+  def call(%Conn{method: "POST", request_path: "/challenge/http/" <> path} = conn, config) do
+    conn
+    |> verify_order(path)
+    |> (fn {request, {order, account}} ->
+          {:ok, _pid} =
+            AcmeEx.Challenge.start_verify(
+              {order, account},
+              config.dns,
+              Account.thumbprint(request)
+            )
+
+          respond_json(conn, 200, Order.to_challenge(config, order, account), [
+            Header.nonce(),
+            Header.authorization(config, order, account)
+          ])
+        end).()
+  end
+
   def call(%Conn{method: "POST", request_path: "/finalize/" <> path} = conn, config) do
     conn
     |> verify_order(path)
