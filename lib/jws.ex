@@ -1,6 +1,4 @@
 defmodule AcmeEx.Jws do
-  alias AcmeEx.Account
-
   def client_key(request), do: Map.fetch!(request.protected, "jwk")
 
   def decode(body) when is_binary(body) do
