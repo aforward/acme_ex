@@ -7,6 +7,46 @@ defmodule AcmeEx.Router do
 
   def init(opts), do: opts |> Map.new()
 
+  @doc """
+
+  """
+  def child_spec(args) do
+    {Plug.Adapters.Cowboy2,
+     scheme: :http, plug: {AcmeEx.Router, [site: site(args)]}, options: [port: port(args)]}
+  end
+
+  @doc """
+  Determine the Acme `port` to run on.  This will default to 4002 if none provided.
+
+  ## Examples
+
+      iex> AcmeEx.Router.port([])
+      4002
+
+      iex> AcmeEx.Router.port([port: 4848])
+      4848
+
+  """
+  def port(args), do: args[:port] || 4002
+
+  @doc """
+  Determine the Acme `site` URL.  You can provide this directly
+  when you start the app using
+
+  ## Examples
+
+      iex> AcmeEx.Router.site([])
+      "http://localhost:4002"
+
+      iex> AcmeEx.Router.site([port: 4848])
+      "http://localhost:4848"
+
+      iex> AcmeEx.Router.site([site: "http://localhost:9999"])
+      "http://localhost:9999"
+
+  """
+  def site(args), do: args[:site] || "http://localhost:#{port(args)}"
+
   def call(%Conn{request_path: "/"} = conn, _config) do
     send_resp(conn, 200, "hello world")
   end

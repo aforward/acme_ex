@@ -1,6 +1,8 @@
 defmodule AcmeEx.RouterTest do
   use ExUnit.Case, async: false
   use Plug.Test
+  doctest AcmeEx.Router
+
   alias AcmeEx.{Router, Header, Nonce, Order, Db, Challenge}
 
   @account_body %{
