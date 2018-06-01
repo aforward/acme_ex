@@ -24,7 +24,7 @@ defmodule AcmeEx.Mixfile do
 
   @package [
     name: @app,
-    files: ["lib", "mix.exs", "README*", "LICENSE*"],
+    files: ["lib", "mix.exs", "README*", "LICENSE*", "assets"],
     maintainers: ["Andrew Forward"],
     licenses: ["MIT"],
     links: %{"GitHub" => @git_url}

@@ -3,6 +3,8 @@ defmodule AcmeEx.Router do
   alias Plug.Conn
   alias AcmeEx.{Account, Order, Header, Jws, Nonce, Cert}
 
+  @favicon File.read!("./assets/favicon.ico")
+
   def init(opts), do: opts |> Map.new()
 
   def call(%Conn{request_path: "/"} = conn, _config) do
@@ -108,12 +110,8 @@ defmodule AcmeEx.Router do
     |> (&respond_body(conn, 200, &1)).()
   end
 
-  # Call the Plug.Static directly so we can keep the config
-  # for the other calls
-  def call(conn, _opts) do
-    [at: "/", from: "assets", only_matching: ~w(favicon)]
-    |> Plug.Static.init()
-    |> (fn opts -> Plug.Static.call(conn, opts) end).()
+  def call(%Conn{method: "GET", request_path: "/favicon.ico"} = conn, _config) do
+    respond_body(conn, 200, @favicon, [{"content-type", "image/x-icon"}])
   end
 
   defp respond_json(conn, status, data, headers \\ []) do
