@@ -7,7 +7,7 @@ Run a local Let's Encrypt Acme verifier
 
 ```elixir
 @deps [
-  acme_ex: "~> 0.1.1"
+  acme_ex: "~> 0.2.0"
 ]
 ```
 

@@ -2,7 +2,7 @@ defmodule AcmeEx.Mixfile do
   use Mix.Project
 
   @app :acme_ex
-  @version "0.1.1"
+  @version "0.2.0"
   @git_url "https://github.com/aforward/acme_ex"
   @home_url @git_url
 
