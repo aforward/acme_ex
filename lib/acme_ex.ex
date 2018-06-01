@@ -33,4 +33,7 @@ defmodule AcmeEx do
 
   @doc false
   def dir(), do: Application.app_dir(:acme_ex)
+
+  @doc false
+  def version(), do: unquote(Mix.Project.config()[:version])
 end
