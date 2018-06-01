@@ -1,6 +1,10 @@
 defmodule AcmeEx.Challenge do
   alias AcmeEx.Order
 
+  def child_spec(_opts \\ []) do
+    {Task.Supervisor, name: AcmeEx.ChallengeSupervisor, restart: :transient, max_restarts: 2}
+  end
+
   def start_verify({order, account}, dns, thumbprint) do
     AcmeEx.ChallengeSupervisor
     |> Task.Supervisor.start_child(fn ->

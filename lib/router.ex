@@ -49,8 +49,10 @@ defmodule AcmeEx.Router do
       iex> AcmeEx.Router.adapter([adapter: Plug.Adapters.Cowboy])
       Plug.Adapters.Cowboy
 
+      iex> AcmeEx.Router.adapter([adapter: "Cowboy2"])
+      Plug.Adapters.Cowboy2
   """
-  def adapter(opts), do: opts[:adapter] || default_adapter()
+  def adapter(opts), do: opts[:adapter] |> resolve_adapter()
 
   @doc """
   Determine the Acme `port` to run on.  This will default to 4002 if none provided.
@@ -255,10 +257,16 @@ defmodule AcmeEx.Router do
     |> (fn {:ok, body, _conn} -> body end).()
   end
 
-  defp default_adapter() do
+  defp resolve_adapter(nil) do
     case Application.spec(:cowboy, :vsn) do
       '1.' ++ _ -> Plug.Adapters.Cowboy
       _ -> Plug.Adapters.Cowboy2
     end
   end
+
+  defp resolve_adapter(name) when is_binary(name) do
+    String.to_atom("Elixir.Plug.Adapters.#{name}")
+  end
+
+  defp resolve_adapter(name) when is_atom(name), do: name
 end

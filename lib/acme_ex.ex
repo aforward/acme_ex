@@ -1,6 +1,7 @@
 defmodule AcmeEx do
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   use Application
+  alias DynamicSupervisor, as: DynS
 
   @moduledoc """
 
@@ -15,20 +16,42 @@ defmodule AcmeEx do
 
   """
 
-  def start(_type, args) do
+  @doc """
+  This will start the application, but nothing much happens except
+  for a do-nothing AcmeEx.Server.  Only if you really want the
+  Acme server to run would you then start it with
+
+      AcmeEx.server(opts)
+
+  Where the opts provide run-time configuration such as `:port`, `:site`
+  and `:adapter`.
+  """
+  def start(_type, opts) do
     import Supervisor.Spec, warn: false
 
     JOSE.json_module(AcmeEx.Jason)
 
-    Supervisor.start_link(
-      [
-        AcmeEx.Router.child_spec(args),
-        AcmeEx.Db,
-        {Task.Supervisor, name: AcmeEx.ChallengeSupervisor, restart: :transient, max_restarts: 2}
-      ],
-      strategy: :one_for_one,
-      name: AcmeEx.Component
-    )
+    started =
+      Supervisor.start_link(
+        [
+          {DynS, name: AcmeEx.Server, strategy: :one_for_one}
+        ],
+        strategy: :one_for_one,
+        name: AcmeEx.Component
+      )
+
+    if opts[:serve_endpoints], do: server(opts)
+    started
+  end
+
+  @doc """
+  Actually start the server
+  """
+  def server(opts \\ []) do
+    {:ok, db} = DynS.start_child(AcmeEx.Server, AcmeEx.Db)
+    {:ok, router} = DynS.start_child(AcmeEx.Server, AcmeEx.Router.child_spec(opts))
+    {:ok, challenge} = DynS.start_child(AcmeEx.Server, AcmeEx.Challenge.child_spec(opts))
+    {:ok, db: db, router: router, challenge: challenge}
   end
 
   @doc false
