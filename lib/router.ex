@@ -3,17 +3,54 @@ defmodule AcmeEx.Router do
   alias Plug.Conn
   alias AcmeEx.{Account, Order, Header, Jws, Nonce, Cert}
 
+  @moduledoc """
+  The test ACME server.  Add this to your supervision tree
+  by calling
+
+      AcmeEx.Router.child_spec()
+
+  Available opts include:
+
+  * `adapter` - Defaults based on which version of cowboy
+  * `port` - Defaults to `4002`
+  * `site` - Defaults to `http://localhost:{port}`
+
+  For example, to run on a different port, you would call
+
+      AcmeEx.Router.child_spec(port: 4003)
+
+  """
+
   @favicon File.read!("./assets/favicon.ico")
 
   def init(opts), do: opts |> Map.new()
 
   @doc """
+  Generate a child_spec to be supervised.  Available opts include:
+
+  * `adapter` - Defaults based on which version of cowboy you are running
+  * `port` - Defaults to `4002`
+  * `site` - Defaults to `http://localhost:{port}`
+  """
+  def child_spec(opts \\ []) do
+    {adapter(opts),
+     scheme: :http, plug: {__MODULE__, [site: site(opts)]}, options: [port: port(opts)]}
+  end
+
+  @doc """
+  Determine the web adapter to use.  It will default based on
+  the version of cowboy you are using.
+
+  ## Examples
+
+      iex> AcmeEx.Router.adapter([])
+      Plug.Adapters.Cowboy2
+
+      iex> AcmeEx.Router.adapter([adapter: Plug.Adapters.Cowboy])
+      Plug.Adapters.Cowboy
 
   """
-  def child_spec(args) do
-    {Plug.Adapters.Cowboy2,
-     scheme: :http, plug: {AcmeEx.Router, [site: site(args)]}, options: [port: port(args)]}
-  end
+  def adapter(opts), do: opts[:adapter] || default_adapter()
 
   @doc """
   Determine the Acme `port` to run on.  This will default to 4002 if none provided.
@@ -27,7 +64,7 @@ defmodule AcmeEx.Router do
       4848
 
   """
-  def port(args), do: args[:port] || 4002
+  def port(opts), do: opts[:port] || 4002
 
   @doc """
   Determine the Acme `site` URL.  You can provide this directly
@@ -45,7 +82,7 @@ defmodule AcmeEx.Router do
       "http://localhost:9999"
 
   """
-  def site(args), do: args[:site] || "http://localhost:#{port(args)}"
+  def site(opts), do: opts[:site] || "http://localhost:#{port(opts)}"
 
   def call(%Conn{request_path: "/"} = conn, _config) do
     send_resp(conn, 200, "hello world")
@@ -216,5 +253,12 @@ defmodule AcmeEx.Router do
     conn
     |> read_body()
     |> (fn {:ok, body, _conn} -> body end).()
+  end
+
+  defp default_adapter() do
+    case Application.spec(:cowboy, :vsn) do
+      '1.' ++ _ -> Plug.Adapters.Cowboy
+      _ -> Plug.Adapters.Cowboy2
+    end
   end
 end

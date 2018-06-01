@@ -9,7 +9,7 @@ defmodule AcmeEx.Mixfile do
   @deps [
     {:jason, "~> 1.0"},
     {:jose, "~> 1.8"},
-    {:cowboy, "~> 2.0"},
+    {:cowboy, ">= 1.0.0"},
     {:plug, "~> 1.0"},
     {:version_tasks, "~> 0.10"},
     {:ex_doc, "> 0.0.0", only: [:dev, :test]}
