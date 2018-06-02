@@ -1,5 +1,6 @@
 defmodule AcmeEx.Router do
   use Plug.Builder
+  require Logger
   alias Plug.Conn
   alias AcmeEx.{Account, Order, Header, Jws, Nonce, Cert}
 
@@ -11,9 +12,10 @@ defmodule AcmeEx.Router do
 
   Available opts include:
 
-  * `adapter` - Defaults based on which version of cowboy
-  * `port` - Defaults to `4002`
-  * `site` - Defaults to `http://localhost:{port}`
+  * `adapter`   - Defaults based on which version of cowboy
+  * `port`      - Defaults to `4002`
+  * `site`      - Defaults to `http://localhost:{port}`
+  * `dns`       - DNS lookups for where to actually route the calls
 
   For example, to run on a different port, you would call
 
@@ -31,10 +33,13 @@ defmodule AcmeEx.Router do
   * `adapter` - Defaults based on which version of cowboy you are running
   * `port` - Defaults to `4002`
   * `site` - Defaults to `http://localhost:{port}`
+
   """
   def child_spec(opts \\ []) do
     {adapter(opts),
-     scheme: :http, plug: {__MODULE__, [site: site(opts)]}, options: [port: port(opts)]}
+     scheme: :http,
+     plug: {__MODULE__, [site: site(opts), dns: dns(opts)]},
+     options: [port: port(opts)]}
   end
 
   @doc """
@@ -86,15 +91,32 @@ defmodule AcmeEx.Router do
   """
   def site(opts), do: opts[:site] || "http://localhost:#{port(opts)}"
 
+  @doc """
+  The underlying DNS lookup, this is useful for routing records somewhere else for testing
+
+  ## Examples
+
+      iex> AcmeEx.Router.dns([])
+      nil
+
+      iex> AcmeEx.Router.dns(dns: %{"foo.bar" => fn -> "localhost:4848" end}) |> Map.keys()
+      ["foo.bar"]
+
+  """
+  def dns(opts), do: opts[:dns]
+
   def call(%Conn{request_path: "/"} = conn, _config) do
     send_resp(conn, 200, "hello world")
   end
 
   def call(%Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
+    Logger.info(fn -> "HEAD /new" end)
     respond_body(conn, 405, "", [Header.nonce()])
   end
 
   def call(%Conn{method: "GET", request_path: "/directory"} = conn, config) do
+    Logger.info(fn -> "GET /directory" end)
+
     respond_json(conn, 200, %{
       newNonce: "#{config.site}/new-nonce",
       newAccount: "#{config.site}/new-account",
@@ -106,6 +128,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
+    Logger.info(fn -> "POST /new-account" end)
+
     conn
     |> verify_request()
     |> Account.client_key()
@@ -114,6 +138,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "POST", request_path: "/new-order"} = conn, config) do
+    Logger.info(fn -> "POST /new-order" end)
+
     conn
     |> verify_request()
     |> create_order()
@@ -134,6 +160,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "GET", request_path: "/order/" <> path} = conn, config) do
+    Logger.info(fn -> "GET /order/#{path} requested" end)
+
     path
     |> Order.decode_path()
     |> (fn {order, account} -> Order.to_summary(config, order, account) end).()
@@ -141,6 +169,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "GET", request_path: "/authorizations/" <> path} = conn, config) do
+    Logger.info(fn -> "GET /authorizations/#{path}" end)
+
     path
     |> Order.decode_path()
     |> (fn {order, account} ->
@@ -153,6 +183,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "POST", request_path: "/challenge/http/" <> path} = conn, config) do
+    Logger.info(fn -> "POST /challenge/http/#{path}" end)
+
     conn
     |> verify_order(path)
     |> (fn {request, {order, account}} ->
@@ -171,6 +203,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "POST", request_path: "/finalize/" <> path} = conn, config) do
+    Logger.info(fn -> "POST /finalize/#{path}" end)
+
     conn
     |> verify_order(path)
     |> (fn {request, {_order, account} = id} ->
@@ -183,6 +217,8 @@ defmodule AcmeEx.Router do
   end
 
   def call(%Conn{method: "GET", request_path: "/cert/" <> path} = conn, _config) do
+    Logger.info(fn -> "GET /cert/#{path}" end)
+
     path
     |> Order.decode_path()
     |> (fn {order, _account} -> order.cert end).()
@@ -191,6 +227,11 @@ defmodule AcmeEx.Router do
 
   def call(%Conn{method: "GET", request_path: "/favicon.ico"} = conn, _config) do
     respond_body(conn, 200, @favicon, [{"content-type", "image/x-icon"}])
+  end
+
+  def call(conn, _config) do
+    Logger.info(fn -> "#{conn.method} #{conn.request_path} (unknown path)" end)
+    respond_body(conn, 404, "Unable to resolve #{conn.request_path}")
   end
 
   defp respond_json(conn, status, data, headers \\ []) do
