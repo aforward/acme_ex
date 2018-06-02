@@ -3,20 +3,23 @@ defmodule AcmeEx do
   use Application
 
   @moduledoc """
+  By default, the application does NOT automatically start.  To
+  start it, you need to,
 
-  By default, the application does nothing.  You must start the
-  server's directly by adding
+      AcmeEx.Standalone.start_link(opts)
+
+  You can also start the server with a mix task
+
+      mix acme.server
+
+  To supervise this server, you can add it to your supervised
+  children by calling,
 
       AcmeEx.Standalone.child_spec(opts)
 
   Or, you can add the children specs directly to your supervisor
 
       AcmeEx.Standalone.children_specs(opts)
-
-  Or, by running the server task
-
-      mix acme.server
-
   """
 
   @doc false

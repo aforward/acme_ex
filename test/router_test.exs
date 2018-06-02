@@ -154,8 +154,9 @@ defmodule AcmeEx.RouterTest do
     assert conn.status == 403
 
     assert conn.resp_body |> Jason.decode!() == %{
-      "type" => "urn:ietf:params:acme:error:malformed",
-      "detail" => "No request was provided, unable to proceed."}
+             "type" => "urn:ietf:params:acme:error:malformed",
+             "detail" => "No request was provided, unable to proceed."
+           }
   end
 
   test "POST /new-order (and GET /order/{account}/{order})" do

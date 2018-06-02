@@ -109,8 +109,8 @@ defmodule AcmeEx.Router do
     conn
     |> read_body()
     |> (fn {:ok, body, conn} ->
-      handle_call(conn, method, path, body, config)
-     end).()
+          handle_call(conn, method, path, body, config)
+        end).()
   end
 
   defp handle_call(conn, _, "/", _body, _config) do
