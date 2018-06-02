@@ -63,9 +63,15 @@ defmodule AcmeEx.RouterTest do
     :ok
   end
 
-  defp http_call(route, method \\ :get, body \\ "") do
+  defp http_call(route, method \\ :get, body \\ "", headers \\ []) do
     method
     |> conn(route, body)
+    |> (fn conn ->
+          headers
+          |> Enum.reduce(conn, fn {header, value}, conn ->
+            put_req_header(conn, header, value)
+          end)
+        end).()
     |> Router.call(opts())
   end
 
@@ -106,6 +112,23 @@ defmodule AcmeEx.RouterTest do
     assert conn.resp_body == ""
   end
 
+  test "big headers" do
+    headers = [
+      {"host", "localhost:4002"},
+      {"user-agent",
+       "CertbotACMEClient/0.24.0 (certbot; darwin 10.13.4) Authenticator/webroot Installer/None (renew; flags: n) Py/3.6.5"},
+      {"accept-encoding", "gzip, deflate"},
+      {"accept", "*/*"},
+      {"connection", "keep-alive"},
+      {"content-type", "application/jose+json"},
+      {"content-length", "1361"}
+    ]
+
+    conn = http_call("/", :get, "", headers)
+    assert conn.state == :sent
+    assert conn.status == 200
+  end
+
   test "POST /new-account" do
     account_nonce = Nonce.next()
     reply_nonce = Nonce.follow(account_nonce)
@@ -122,6 +145,17 @@ defmodule AcmeEx.RouterTest do
              "id" => account_nonce,
              "status" => "valid"
            }
+  end
+
+  test "POST /new-account no data" do
+    conn = http_call("/new-account", :post)
+
+    assert conn.state == :sent
+    assert conn.status == 403
+
+    assert conn.resp_body |> Jason.decode!() == %{
+      "type" => "urn:ietf:params:acme:error:malformed",
+      "detail" => "No request was provided, unable to proceed."}
   end
 
   test "POST /new-order (and GET /order/{account}/{order})" do

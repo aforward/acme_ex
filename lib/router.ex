@@ -105,16 +105,24 @@ defmodule AcmeEx.Router do
   """
   def dns(opts), do: opts[:dns]
 
-  def call(%Conn{request_path: "/"} = conn, _config) do
+  def call(%Conn{method: method, request_path: path} = conn, config) do
+    conn
+    |> read_body()
+    |> (fn {:ok, body, conn} ->
+      handle_call(conn, method, path, body, config)
+     end).()
+  end
+
+  defp handle_call(conn, _, "/", _body, _config) do
     send_resp(conn, 200, "hello world")
   end
 
-  def call(%Conn{method: "HEAD", request_path: "/new" <> _} = conn, _config) do
+  defp handle_call(conn, "HEAD", "/new" <> _, _body, _config) do
     Logger.info(fn -> "HEAD /new" end)
     respond_body(conn, 405, "", [Header.nonce()])
   end
 
-  def call(%Conn{method: "GET", request_path: "/directory"} = conn, config) do
+  defp handle_call(conn, "GET", "/directory", _body, config) do
     Logger.info(fn -> "GET /directory" end)
 
     respond_json(conn, 200, %{
@@ -127,20 +135,27 @@ defmodule AcmeEx.Router do
     })
   end
 
-  def call(%Conn{method: "POST", request_path: "/new-account"} = conn, _config) do
+  defp handle_call(conn, "POST", "/new-account", body, _config) do
     Logger.info(fn -> "POST /new-account" end)
 
-    conn
+    body
     |> verify_request()
-    |> Account.client_key()
-    |> Account.new()
-    |> (&respond_json(conn, 201, &1, [Header.nonce()])).()
+    |> (fn
+          {:error, reason} ->
+            respond_error(conn, "malformed", reason)
+
+          request ->
+            request
+            |> Account.client_key()
+            |> Account.new()
+            |> (&respond_json(conn, 201, &1, [Header.nonce()])).()
+        end).()
   end
 
-  def call(%Conn{method: "POST", request_path: "/new-order"} = conn, config) do
+  defp handle_call(conn, "POST", "/new-order", body, config) do
     Logger.info(fn -> "POST /new-order" end)
 
-    conn
+    body
     |> verify_request()
     |> create_order()
     |> (fn {order, account} ->
@@ -159,16 +174,14 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(%Conn{method: "GET", request_path: "/order/" <> path} = conn, config) do
-    Logger.info(fn -> "GET /order/#{path} requested" end)
-
+  defp handle_call(conn, "GET", "/order/" <> path, _body, config) do
     path
     |> Order.decode_path()
     |> (fn {order, account} -> Order.to_summary(config, order, account) end).()
     |> (&respond_json(conn, 200, &1)).()
   end
 
-  def call(%Conn{method: "GET", request_path: "/authorizations/" <> path} = conn, config) do
+  defp handle_call(conn, "GET", "/authorizations/" <> path, _body, config) do
     Logger.info(fn -> "GET /authorizations/#{path}" end)
 
     path
@@ -182,10 +195,10 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(%Conn{method: "POST", request_path: "/challenge/http/" <> path} = conn, config) do
+  defp handle_call(conn, "POST", "/challenge/http/" <> path, body, config) do
     Logger.info(fn -> "POST /challenge/http/#{path}" end)
 
-    conn
+    body
     |> verify_order(path)
     |> (fn {request, {order, account}} ->
           {:ok, _pid} =
@@ -202,10 +215,10 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(%Conn{method: "POST", request_path: "/finalize/" <> path} = conn, config) do
+  defp handle_call(conn, "POST", "/finalize/" <> path, body, config) do
     Logger.info(fn -> "POST /finalize/#{path}" end)
 
-    conn
+    body
     |> verify_order(path)
     |> (fn {request, {_order, account} = id} ->
           request
@@ -216,7 +229,7 @@ defmodule AcmeEx.Router do
         end).()
   end
 
-  def call(%Conn{method: "GET", request_path: "/cert/" <> path} = conn, _config) do
+  defp handle_call(conn, "GET", "/cert/" <> path, _body, _config) do
     Logger.info(fn -> "GET /cert/#{path}" end)
 
     path
@@ -225,13 +238,25 @@ defmodule AcmeEx.Router do
     |> (&respond_body(conn, 200, &1)).()
   end
 
-  def call(%Conn{method: "GET", request_path: "/favicon.ico"} = conn, _config) do
+  defp handle_call(conn, "GET", "/favicon.ico", _body, _config) do
     respond_body(conn, 200, @favicon, [{"content-type", "image/x-icon"}])
   end
 
-  def call(conn, _config) do
-    Logger.info(fn -> "#{conn.method} #{conn.request_path} (unknown path)" end)
+  defp handle_call(conn, method, request_path, _body, _config) do
+    Logger.info(fn -> "#{method} #{request_path} (unknown path)" end)
     respond_body(conn, 404, "Unable to resolve #{conn.request_path}")
+  end
+
+  defp respond_error(conn, type, reason) do
+    conn
+    |> respond_body(
+      403,
+      Jason.encode!(%{
+        type: "urn:ietf:params:acme:error:#{type}",
+        detail: reason
+      }),
+      [{"content-type", "application/json"}]
+    )
   end
 
   defp respond_json(conn, status, data, headers \\ []) do
@@ -250,23 +275,26 @@ defmodule AcmeEx.Router do
     |> send_resp(status, body)
   end
 
-  defp verify_request(conn) do
-    conn
-    |> read_body!()
+  defp verify_request(body) do
+    body
     |> Jws.decode()
-    |> (fn {:ok, request} ->
-          request
-          |> get_in([:protected, "nonce"])
-          |> Base.decode64!(padding: false)
-          |> String.to_integer()
-          |> Nonce.verify()
+    |> (fn
+          {:ok, request} ->
+            request
+            |> get_in([:protected, "nonce"])
+            |> Base.decode64!(padding: false)
+            |> String.to_integer()
+            |> Nonce.verify()
 
-          request
+            request
+
+          {:error, :empty} ->
+            {:error, "No request was provided, unable to proceed."}
         end).()
   end
 
-  defp verify_order(conn, path) do
-    conn
+  defp verify_order(body, path) do
+    body
     |> verify_request()
     |> (&{&1, Order.decode_path(path)}).()
   end
@@ -290,12 +318,6 @@ defmodule AcmeEx.Router do
       {:ok, updated_order} -> updated_order
       {:error, reason} -> raise reason
     end
-  end
-
-  defp read_body!(conn) do
-    conn
-    |> read_body()
-    |> (fn {:ok, body, _conn} -> body end).()
   end
 
   defp resolve_adapter(nil) do

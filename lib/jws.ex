@@ -1,6 +1,8 @@
 defmodule AcmeEx.Jws do
   def client_key(request), do: Map.fetch!(request.protected, "jwk")
 
+  def decode(""), do: {:error, :empty}
+
   def decode(body) when is_binary(body) do
     body |> decode_json!() |> decode()
   end
