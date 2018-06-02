@@ -15,6 +15,25 @@ defmodule AcmeEx.ChallengeTest do
 
   def dns(), do: %{"mypony" => fn -> "localhost:4848" end}
 
+  test "start_verify (direct path)" do
+    account = Account.new("AcmeEx.ChallengeTest.abc999")
+    order_id = Nonce.next()
+    order = Order.new(["mypony", "localhost:4849"], account, @token)
+
+    Challenge.start_verify({order, account}, nil, @thumbprint)
+    Challenge.await_all()
+
+    {:ok, updated} = Order.fetch("AcmeEx.ChallengeTest.abc999", order_id)
+
+    assert %{
+             id: order_id,
+             domains: ["mypony", "localhost:4849"],
+             cert: nil,
+             status: :valid,
+             token: @token
+           } == updated
+  end
+
   test "start_verify (ok)" do
     account = Account.new("AcmeEx.ChallengeTest.abc123")
     order_id = Nonce.next()

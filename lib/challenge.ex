@@ -1,8 +1,14 @@
 defmodule AcmeEx.Challenge do
+  require Logger
   alias AcmeEx.Order
 
   def child_spec(_opts \\ []) do
     {Task.Supervisor, name: AcmeEx.ChallengeSupervisor, restart: :transient, max_restarts: 2}
+  end
+
+  def start_verify({order, account}, nil, _thumbprint) do
+    Logger.info(fn -> "Circumventing verification, no DNS records provided" end)
+    Order.update(account.id, %{order | status: :valid})
   end
 
   def start_verify({order, account}, dns, thumbprint) do
@@ -54,6 +60,8 @@ defmodule AcmeEx.Challenge do
   end
 
   def request(server, token) do
+    Logger.info(fn -> "Sending challenge [#{token}] to #{server}" end)
+
     :httpc.request(
       :get,
       {'http://#{server}/.well-known/acme-challenge/#{token}', []},
