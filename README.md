@@ -40,7 +40,7 @@ Or, you can add the children specs directly to your supervisor
 
 ```elixir
 @deps [
-  acme_ex: "~> 0.4.0"
+  acme_ex: "~> 0.4.1"
 ]
 ```
 
