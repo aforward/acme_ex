@@ -5,7 +5,8 @@ defmodule AcmeEx.Standalone do
 
   def children_specs() do
     if Application.get_env(:acme_ex, :serve_endpoints) do
-      IO.puts "Starting standalone ACME server."
+      IO.puts("Starting standalone ACME server.")
+
       Application.get_env(:acme_ex, :opts)
       |> children_specs()
     else
