@@ -18,12 +18,10 @@ defmodule Mix.Tasks.Acme.Server do
 
   @doc false
   def run(args) do
-    Application.ensure_all_started(:acme_ex)
-
     args
     |> OptionParser.parse(strict: [site: :string, port: :integer, adapter: :string])
     |> (fn {opts, _, _} -> opts end).()
-    |> AcmeEx.server()
+    |> (&Application.put_env(:acme_ex, :serve_endpoints, true, opts: &1)).()
 
     Mix.Tasks.Run.run(run_args())
   end

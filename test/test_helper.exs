@@ -1,3 +1,3 @@
 ExUnit.configure(exclude: [external: true])
 ExUnit.start()
-AcmeEx.server()
+AcmeEx.Standalone.start_link()
