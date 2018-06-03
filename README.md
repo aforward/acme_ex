@@ -2,12 +2,9 @@
 
 Run a local Let's Encrypt Acme verifier.
 
-This was heavily influence by github.com/sasa1977/site_encrypt
+This was heavily influence by [site_encrypt](https://github.com/sasa1977/site_encrypt) from [Saša Jurić](https://github.com/sasa1977)
 which provides integrated certificate renewal within your
 Phoenix app.
-
-There is currently a PR open to incorporate this component
-into that library.
 
 To run the server, you can use mix
 
@@ -40,7 +37,7 @@ Or, you can add the children specs directly to your supervisor
 
 ```elixir
 @deps [
-  acme_ex: "~> 0.4.1"
+  acme_ex: "~> 0.4.0"
 ]
 ```
 
