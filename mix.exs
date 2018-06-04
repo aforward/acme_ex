@@ -12,6 +12,7 @@ defmodule AcmeEx.Mixfile do
     {:cowboy, ">= 1.0.0"},
     {:plug, "~> 1.0"},
     {:version_tasks, "~> 0.10"},
+    {:stream_data, "~> 0.1", only: [:dev, :test]},
     {:ex_doc, "> 0.0.0", only: [:dev, :test]}
   ]
 
